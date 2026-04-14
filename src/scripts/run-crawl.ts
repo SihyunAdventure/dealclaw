@@ -33,6 +33,7 @@ async function main() {
 
   try {
     for (const col of targets) {
+     try {
       const startedAt = new Date();
       console.log(`\n📦 [${col.displayName}] 크롤링 시작...`);
 
@@ -101,11 +102,13 @@ async function main() {
       const finishedAt = new Date();
 
       // Log crawl run
+      const salePrices = products.map((p) => p.salePrice);
+      const unitPrices = products.filter((p) => p.unitPriceValue > 0).map((p) => p.unitPriceValue);
       await db.insert(schema.crawlRuns).values({
         collection: col.slug,
         productCount: products.length,
-        minSalePrice: Math.min(...products.map((p) => p.salePrice)),
-        minUnitPrice: Math.min(...products.filter((p) => p.unitPriceValue > 0).map((p) => p.unitPriceValue)),
+        minSalePrice: salePrices.length > 0 ? Math.min(...salePrices) : null,
+        minUnitPrice: unitPrices.length > 0 ? Math.min(...unitPrices) : null,
         status: "completed",
         startedAt,
         finishedAt,
@@ -113,6 +116,9 @@ async function main() {
 
       console.log(`\n  💾 DB 저장 완료: ${upserted}개 upsert`);
       console.log(`  ⏱ ${((finishedAt.getTime() - startedAt.getTime()) / 1000).toFixed(1)}초`);
+     } catch (colErr: any) {
+      console.error(`\n  ❌ [${col.displayName}] 실패: ${colErr.message}`);
+     }
     }
   } catch (err: any) {
     console.error(`\n❌ 크롤링 실패: ${err.message}`);
