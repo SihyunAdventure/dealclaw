@@ -33,7 +33,7 @@ export function CollectionSection({
       const bVal = b.unitPriceValue ?? Infinity;
       return aVal - bVal || a.salePrice - b.salePrice;
     })
-    .slice(0, 3);
+    .slice(0, 5);
 
   if (topDeals.length === 0) return null;
 

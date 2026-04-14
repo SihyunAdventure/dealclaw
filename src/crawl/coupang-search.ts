@@ -27,14 +27,14 @@ async function extractRawProducts(page: Page): Promise<RawProduct[]> {
       if (!priceArea) continue;
 
       const badges: string[] = [];
-      item
-        .querySelectorAll("[class*='Badge'] img, [class*='badge'] img")
-        .forEach((b) => {
-          const src = (b as HTMLImageElement).src || "";
-          if (src.includes("rocket")) badges.push("로켓배송");
-          else if (src.includes("coupick")) badges.push("쿠픽");
-          else if (src.includes("freeship")) badges.push("무료배송");
-        });
+      item.querySelectorAll("img").forEach((b) => {
+        const src = (b as HTMLImageElement).src || "";
+        if (src.includes("logo_rocket") || src.includes("logo_fresh") || src.includes("rocket_logo")) {
+          if (!badges.includes("로켓")) badges.push("로켓");
+        } else if (src.includes("coupick")) {
+          if (!badges.includes("쿠픽")) badges.push("쿠픽");
+        }
+      });
 
       results.push({
         name: nameEl?.textContent?.trim() || "",
@@ -89,7 +89,7 @@ export async function crawlCoupangSearch(
       coupangId: coupangIdMatch[1],
       link: `https://www.coupang.com${raw.href}`,
       imageUrl: raw.imageUrl,
-      isRocket: raw.badges.includes("로켓배송"),
+      isRocket: raw.badges.includes("로켓"),
       badges: raw.badges,
     });
   }

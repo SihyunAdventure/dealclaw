@@ -15,7 +15,7 @@ export function PriceDisplay({
   discountRate,
   unitPriceText,
 }: PriceDisplayProps) {
-  const hasDiscount = discountRate && discountRate > 0 && originalPrice && originalPrice > salePrice;
+  const hasDiscount = (discountRate ?? 0) > 0 && (originalPrice ?? 0) > salePrice;
 
   return (
     <div className="flex flex-col gap-1">

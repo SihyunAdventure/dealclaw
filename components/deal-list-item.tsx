@@ -31,7 +31,7 @@ export function DealListItem({
   collection,
 }: DealListItemProps) {
   const hasDiscount =
-    discountRate && discountRate > 0 && originalPrice && originalPrice > salePrice;
+    (discountRate ?? 0) > 0 && (originalPrice ?? 0) > salePrice;
 
   return (
     <a
