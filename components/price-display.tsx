@@ -25,7 +25,7 @@ export function PriceDisplay({
         </p>
       )}
       <div className="flex items-center gap-1.5 flex-wrap">
-        {hasDiscount && (
+        {hasDiscount && originalPrice && (
           <>
             <span className="text-xs text-muted-foreground line-through">
               {formatPrice(originalPrice)}원

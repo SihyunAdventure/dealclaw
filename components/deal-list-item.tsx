@@ -68,7 +68,7 @@ export function DealListItem({
             {formatPrice(salePrice)}
             <span className="text-xs font-normal">원</span>
           </span>
-          {hasDiscount && (
+          {hasDiscount && originalPrice && (
             <span className="text-[11px] text-muted-foreground line-through">
               {formatPrice(originalPrice)}원
             </span>
