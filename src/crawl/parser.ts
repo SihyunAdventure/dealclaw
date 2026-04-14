@@ -13,15 +13,19 @@ export function parsePriceArea(text: string): ParsedPrice {
     num: parseInt(m[1].replace(/,/g, "")),
   }));
 
-  // Unit price inside parentheses: "(100g당 2,598원)"
-  const unitMatch = text.match(/\(([^)]*\d{1,3}(?:,\d{3})*원[^)]*)\)/);
-  const unitPriceText = unitMatch ? unitMatch[1] : "";
+  // Unit price — try parenthesized first, then non-parenthesized
+  // Pattern 1: "(100g당 2,598원)" or "(1구당 380원)"
+  let unitMatch = text.match(/\(([^)]*(?:\d+[가-힣]+당)\s*[\d,]+원[^)]*)\)/);
+
+  // Pattern 2: "100g당 2,598원" or "1구당 380원" (without parentheses)
+  if (!unitMatch) {
+    unitMatch = text.match(/((?:\d+[가-힣]+당)\s*[\d,]+원)/);
+  }
+
+  const unitPriceText = unitMatch ? unitMatch[1].trim() : "";
   const unitPriceValue = unitMatch
     ? parseInt(
-        (unitMatch[1].match(/(\d{1,3}(?:,\d{3})+)/)?.[1] || "0").replace(
-          /,/g,
-          "",
-        ),
+        (unitMatch[1].match(/당\s*(\d{1,3}(?:,\d{3})*)원/)?.[1] || "0").replace(/,/g, ""),
       )
     : 0;
 
@@ -30,7 +34,9 @@ export function parsePriceArea(text: string): ParsedPrice {
   const discountRate = discountMatch ? parseInt(discountMatch[1]) : 0;
 
   // Filter out unit price from real prices
-  const realPrices = allPrices.filter((p) => p.num !== unitPriceValue);
+  const realPrices = unitPriceValue > 0
+    ? allPrices.filter((p) => p.num !== unitPriceValue)
+    : allPrices;
 
   let salePrice = 0;
   let originalPrice = 0;

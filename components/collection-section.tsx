@@ -29,8 +29,8 @@ export function CollectionSection({
   // 단위가격 기준 정렬, 최저가 상위 3개만
   const topDeals = [...products]
     .sort((a, b) => {
-      const aVal = a.unitPriceValue ?? Infinity;
-      const bVal = b.unitPriceValue ?? Infinity;
+      const aVal = a.unitPriceValue && a.unitPriceValue > 0 ? a.unitPriceValue : Infinity;
+      const bVal = b.unitPriceValue && b.unitPriceValue > 0 ? b.unitPriceValue : Infinity;
       return aVal - bVal || a.salePrice - b.salePrice;
     })
     .slice(0, 5);

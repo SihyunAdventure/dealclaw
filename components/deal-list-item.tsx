@@ -77,21 +77,23 @@ export function DealListItem({
         {unitPriceText && (
           <p className="text-[11px] text-muted-foreground">{unitPriceText}</p>
         )}
-        <div className="flex items-center gap-1.5 mt-0.5">
-          {isRocket && (
-            <span className="inline-flex items-center rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600">
-              🚀 로켓
-            </span>
-          )}
-          {badges && badges.filter(b => b !== "로켓배송").map((badge) => (
-            <span
-              key={badge}
-              className="text-[10px] text-muted-foreground"
-            >
-              {badge}
-            </span>
-          ))}
-        </div>
+        {(isRocket || (badges && badges.length > 0)) && (
+          <div className="flex items-center gap-1.5 mt-0.5">
+            {isRocket && (
+              <span className="inline-flex items-center rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600">
+                🚀 로켓
+              </span>
+            )}
+            {badges?.filter(b => b !== "로켓").map((badge) => (
+              <span
+                key={badge}
+                className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+              >
+                {badge}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </a>
   );
