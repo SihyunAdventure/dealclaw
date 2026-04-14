@@ -1,2 +1,0 @@
-[2026-04-14T11:23:27.595Z] GET https://search.shopping.naver.com/search/all?query=%EC%B0%A8%EB%8F%8C%EB%B0%95%EC%9D%B4&sort=price_asc → 418 (159ms, 3104B)
-[2026-04-14T11:23:27.764Z] GET https://ssl.pstatic.net/shoppingsearch/static/icons/img_error.png → 200 (188ms, 677B)

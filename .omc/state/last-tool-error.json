@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"# Test Naver Shopping internal API endpoint\\ncurl -s -w \\\"\\\\nHTTP: %{http_code}\\\" \\\\\\n  -H \\\"User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gec...",
-  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 4, in <module>\n    data = json.load(sys.stdin)\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.2_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/json/__init__.py\", line 298, in load\n    return loads(fp.read(),\n        cls=cls, object_hook=object_hook,\n        parse_float=parse_float, parse_int=parse_int,\n        parse_constant=parse_constant, object_pairs_hook=object_pairs_hook, **kw)\n  File \"/opt/homebrew/Cellar/pyt...",
-  "timestamp": "2026-04-14T11:23:17.299Z",
-  "retry_count": 1
-}
