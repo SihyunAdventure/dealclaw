@@ -1,73 +1,57 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { asc, desc, eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import * as schema from "@/lib/db/schema";
-import { HeroBanner } from "@/components/hero-banner";
-import { ProductGrid } from "@/components/product-grid";
-import { CollectionTabs } from "@/components/collection-tabs";
+import { CollectionSection } from "@/components/collection-section";
 import { collections } from "@/src/data/collections";
 
 export const revalidate = 300;
 
-async function getProducts(collection: string) {
+async function getAllProducts() {
   const sql = neon(process.env.DATABASE_URL!);
   const db = drizzle(sql, { schema });
 
   return db
     .select()
     .from(schema.products)
-    .where(eq(schema.products.collection, collection))
     .orderBy(asc(schema.products.unitPriceValue));
 }
 
-async function getLastCrawl(collection: string) {
-  const sql = neon(process.env.DATABASE_URL!);
-  const db = drizzle(sql, { schema });
-
-  const [run] = await db
-    .select()
-    .from(schema.crawlRuns)
-    .where(eq(schema.crawlRuns.collection, collection))
-    .orderBy(desc(schema.crawlRuns.finishedAt))
-    .limit(1);
-
-  return run;
-}
-
-interface PageProps {
-  searchParams: Promise<{ collection?: string }>;
-}
-
-export default async function Home({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const activeSlug = params.collection || collections[0].slug;
-  const col = collections.find((c) => c.slug === activeSlug) || collections[0];
-
-  const [products, lastCrawl] = await Promise.all([
-    getProducts(col.slug),
-    getLastCrawl(col.slug),
-  ]);
+export default async function Home() {
+  const allProducts = await getAllProducts();
 
   return (
-    <main className="flex-1">
-      <HeroBanner
-        title={`🔥 ${col.displayName} 최저가`}
-        description={col.description}
-        lastCrawledAt={lastCrawl?.finishedAt?.toISOString()}
-      />
-      <CollectionTabs collections={collections} activeSlug={col.slug} />
-      <div className="mx-auto max-w-5xl px-4 py-6">
-        {products.length > 0 ? (
-          <ProductGrid products={products} />
-        ) : (
-          <div className="py-20 text-center text-muted-foreground">
-            <p className="text-lg">아직 상품이 없습니다</p>
-            <p className="mt-2 text-sm">
-              크롤링 데이터가 곧 업데이트됩니다.
-            </p>
-          </div>
-        )}
+    <main className="flex-1 bg-background">
+      {/* 헤더 */}
+      <header className="border-b border-border px-4 py-5">
+        <h1 className="text-xl font-bold tracking-tight">🔥 오늘의 핫딜</h1>
+        <p className="text-xs text-muted-foreground mt-1">
+          쿠팡 최저가를 한눈에 비교하세요
+        </p>
+      </header>
+
+      {/* 컬렉션별 핫딜 리스트 */}
+      <div>
+        {collections.map((col) => {
+          const products = allProducts.filter(
+            (p) => p.collection === col.slug,
+          );
+          return (
+            <CollectionSection
+              key={col.slug}
+              title={col.displayName}
+              description={col.description}
+              products={products}
+            />
+          );
+        })}
       </div>
+
+      {/* 푸터 */}
+      <footer className="px-4 py-6 text-center text-[11px] text-muted-foreground border-t border-border mt-4">
+        <p>쿠팡 파트너스 활동의 일환으로 수수료를 지급받을 수 있습니다.</p>
+        <p className="mt-1">© 2026 Dealclaw</p>
+      </footer>
     </main>
   );
 }

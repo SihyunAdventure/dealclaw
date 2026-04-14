@@ -19,8 +19,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" className={`${dmSans.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col font-[family-name:var(--font-dm-sans)]">
-        {children}
+      <body className="min-h-full flex flex-col font-[family-name:var(--font-dm-sans)] bg-muted/30">
+        <div className="mx-auto w-full max-w-[480px] min-h-full bg-background shadow-sm">
+          {children}
+        </div>
       </body>
     </html>
   );
