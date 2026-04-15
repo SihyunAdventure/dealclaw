@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "crawl": "tsx src/scripts/run-crawl.ts",
+    "crawl:oliveyoung": "tsx src/scripts/run-oliveyoung-crawl.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
   },
