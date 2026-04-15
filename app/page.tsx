@@ -1,8 +1,9 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { asc, eq } from "drizzle-orm";
+import { asc } from "drizzle-orm";
 import * as schema from "@/lib/db/schema";
 import { CollectionSection } from "@/components/collection-section";
+import { CollectionTabs } from "@/components/collection-tabs";
 import { collections } from "@/src/data/collections";
 
 export const revalidate = 300;
@@ -30,6 +31,14 @@ export default async function Home() {
         </p>
       </header>
 
+      {/* 컬렉션 탭 (sticky) */}
+      <CollectionTabs
+        collections={collections.map((c) => ({
+          slug: c.slug,
+          displayName: c.displayName,
+        }))}
+      />
+
       {/* 컬렉션별 핫딜 리스트 */}
       <div>
         {collections.map((col) => {
@@ -39,6 +48,7 @@ export default async function Home() {
           return (
             <CollectionSection
               key={col.slug}
+              slug={col.slug}
               title={col.displayName}
               description={col.description}
               products={products}
