@@ -78,9 +78,10 @@ export async function launchChrome(
     : [];
 
   // Off-screen: 창은 뜨지만 화면 밖(far negative X)으로 밀어 사용자 방해 최소화.
-  // macOS Chrome 은 --window-position / --window-size 둘 다 respect.
+  // macOS 전용. Linux/EC2 에서는 Xvfb 가상 디스플레이(1440x900) 안쪽이라
+  // --window-position=-2400 주면 렌더 영역 밖이 되므로 offScreen 무시.
   const offScreenFlags =
-    options.offScreen && !options.headless
+    options.offScreen && !options.headless && !IS_LINUX
       ? ["--window-position=-2400,-100", "--window-size=1200,900"]
       : [];
 
