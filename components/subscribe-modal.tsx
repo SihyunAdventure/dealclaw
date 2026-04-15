@@ -35,7 +35,14 @@ export function SubscribeModalProvider({
     setConsent(false);
   }, []);
 
-  const close = useCallback(() => setStatus({ kind: "closed" }), []);
+  const close = useCallback(() => {
+    // 사용자가 모달을 닫은 시점부터 이 세션에서는 재노출 안 함.
+    // 재방문·재클릭 친화 (affiliate 클릭 보전).
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("hib_modal_dismissed", "1");
+    }
+    setStatus({ kind: "closed" });
+  }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();

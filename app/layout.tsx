@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Noto_Sans_KR, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import { SubscribeModalProvider } from "@/components/subscribe-modal";
@@ -16,6 +16,14 @@ const cormorant = Cormorant_Garamond({
 });
 
 const SITE_URL = "https://hotinbeauty.com";
+
+export const viewport: Viewport = {
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#faf6f1" },
+    { media: "(prefers-color-scheme: dark)", color: "#2a221c" },
+  ],
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
