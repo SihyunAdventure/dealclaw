@@ -1,14 +1,8 @@
+import { businessInfo as BUSINESS_INFO } from "@/lib/biz-info";
+
 const SITE_URL = process.env.SITE_URL || "https://hotinbeauty.com";
 const BRAND = "hotinbeauty";
 const AD_PREFIX = "(광고)";
-
-// TODO: 실사업자 정보로 교체 (SIH-548 법규 이슈에서 최종 확정)
-const BUSINESS_INFO = {
-  name: process.env.HIB_BUSINESS_NAME || "hotinbeauty",
-  owner: process.env.HIB_BUSINESS_OWNER || "",
-  address: process.env.HIB_BUSINESS_ADDRESS || "",
-  email: process.env.HIB_BUSINESS_EMAIL || "contact@hotinbeauty.com",
-};
 
 function footerBlock(unsubscribeUrl: string) {
   return `
