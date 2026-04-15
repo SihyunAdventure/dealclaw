@@ -25,7 +25,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`\n=== Dealclaw 크롤러 ===`);
+  console.log(`\n=== hotinbeauty 크롤러 ===`);
   console.log(`대상: ${targets.map((c) => c.displayName).join(", ")}`);
   console.log(`모드: ${dryRun ? "DRY RUN" : "LIVE"}\n`);
 

@@ -15,7 +15,7 @@ interface ChromeSession {
 
 export async function launchChrome(): Promise<ChromeSession> {
   const port = 9450 + Math.floor(Math.random() * 50);
-  const tmpDir = `/tmp/dealclaw-crawl-${Date.now()}`;
+  const tmpDir = `/tmp/hotinbeauty-crawl-${Date.now()}`;
 
   rmSync(tmpDir, { recursive: true, force: true });
   mkdirSync(tmpDir, { recursive: true });
