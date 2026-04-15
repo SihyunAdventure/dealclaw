@@ -58,12 +58,17 @@ export async function crawlCoupangSearch(
 
   console.log(`  → ${url}`);
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-  await new Promise((r) => setTimeout(r, 5000));
 
-  // Scroll for lazy loading
+  // 초기 대기 3~7초 랜덤 — 고정 5초 패턴 탐지 회피
+  const initialWait = 3000 + Math.floor(Math.random() * 4000);
+  await new Promise((r) => setTimeout(r, initialWait));
+
+  // Lazy loading 스크롤: 스크롤량/딜레이 모두 랜덤화
   for (let i = 0; i < 5; i++) {
-    await page.evaluate(() => window.scrollBy(0, 800));
-    await new Promise((r) => setTimeout(r, 400));
+    const scrollAmount = 600 + Math.floor(Math.random() * 400);
+    await page.evaluate((amt) => window.scrollBy(0, amt), scrollAmount);
+    const scrollDelay = 300 + Math.floor(Math.random() * 500);
+    await new Promise((r) => setTimeout(r, scrollDelay));
   }
 
   const title = await page.title();

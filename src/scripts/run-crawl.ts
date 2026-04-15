@@ -161,7 +161,10 @@ async function main() {
   console.log(`대상: ${targets.map((c) => c.displayName).join(", ")}`);
   console.log(`모드: ${dryRun ? "DRY RUN" : "LIVE"}\n`);
 
-  const { browser, page, cleanup } = await launchChrome();
+  const { browser, page, cleanup } = await launchChrome({
+    profileKey: "coupang",
+    offScreen: true,
+  });
 
   try {
     for (const col of targets) {
@@ -194,10 +197,17 @@ async function main() {
           continue;
         }
 
-        // Upsert products
+        // 단위가격 오름차순 rank (스냅샷용)
+        const rankMap = new Map<string, number>();
+        sorted.forEach((p, i) => rankMap.set(p.coupangId, i + 1));
+
+        const crawledAt = new Date();
+        const snapshotRows: (typeof schema.coupangPriceSnapshots.$inferInsert)[] = [];
+
+        // Upsert products + collect snapshots
         let upserted = 0;
         for (const p of products) {
-          await db
+          const [row] = await db
             .insert(schema.products)
             .values({
               collection: col.slug,
@@ -212,8 +222,8 @@ async function main() {
               unitPriceValue: p.unitPriceValue || null,
               isRocket: p.isRocket,
               badges: p.badges,
-              lastCrawledAt: new Date(),
-              updatedAt: new Date(),
+              lastCrawledAt: crawledAt,
+              updatedAt: crawledAt,
             })
             .onConflictDoUpdate({
               target: schema.products.coupangId,
@@ -228,11 +238,30 @@ async function main() {
                 unitPriceValue: p.unitPriceValue || null,
                 isRocket: p.isRocket,
                 badges: p.badges,
-                lastCrawledAt: new Date(),
-                updatedAt: new Date(),
+                lastCrawledAt: crawledAt,
+                updatedAt: crawledAt,
               },
-            });
+            })
+            .returning({ id: schema.products.id });
+
+          snapshotRows.push({
+            productId: row.id,
+            coupangId: p.coupangId,
+            collection: col.slug,
+            salePrice: p.salePrice,
+            originalPrice: p.originalPrice,
+            discountRate: p.discountRate,
+            unitPriceValue: p.unitPriceValue || null,
+            isRocket: p.isRocket,
+            badges: p.badges,
+            rank: rankMap.get(p.coupangId) ?? null,
+            crawledAt,
+          });
           upserted++;
+        }
+
+        if (snapshotRows.length > 0) {
+          await db.insert(schema.coupangPriceSnapshots).values(snapshotRows);
         }
 
         const finishedAt = new Date();
