@@ -45,3 +45,6 @@ next-env.d.ts
 .omc/
 _poc/
 *.png
+
+# drizzle-kit generated SQL (push-based workflow, schema.ts is SOT)
+/drizzle/
