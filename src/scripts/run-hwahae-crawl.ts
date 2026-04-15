@@ -14,7 +14,13 @@
 //   HWAHAE_USER_AGENT    (선택) UA 오버라이드. 기본: 하드코딩 Chrome 124.
 
 import { config } from "dotenv";
-config({ path: ".env.local" });
+import { fileURLToPath } from "url";
+import { dirname, resolve } from "path";
+
+// launchd 에선 CWD 가 불확실(WorkingDirectory=$HOME 이어도 직접 kickstart 시 / 가 됨).
+// 스크립트 위치 기준 절대경로로 .env.local 을 로드. src/scripts/run-hwahae-crawl.ts → ../../.env.local
+const __dirname = dirname(fileURLToPath(import.meta.url));
+config({ path: resolve(__dirname, "..", "..", ".env.local") });
 
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
