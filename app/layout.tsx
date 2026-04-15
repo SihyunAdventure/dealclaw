@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Noto_Sans_KR, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
+import { SubscribeModalProvider } from "@/components/subscribe-modal";
 
 const notoSansKr = Noto_Sans_KR({
   variable: "--font-sans",
@@ -43,9 +44,11 @@ export default function RootLayout({
       className={`${notoSansKr.variable} ${cormorant.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans bg-muted/40">
-        <div className="mx-auto w-full max-w-[480px] min-h-full bg-background shadow-sm">
-          {children}
-        </div>
+        <SubscribeModalProvider>
+          <div className="mx-auto w-full max-w-[480px] min-h-full bg-background shadow-sm">
+            {children}
+          </div>
+        </SubscribeModalProvider>
       </body>
     </html>
   );

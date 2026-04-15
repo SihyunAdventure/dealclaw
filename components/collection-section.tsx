@@ -75,6 +75,7 @@ export function CollectionSection({
             isRocket={product.isRocket}
             badges={product.badges}
             collection={product.collection}
+            collectionDisplay={title}
           />
         ))}
       </div>
