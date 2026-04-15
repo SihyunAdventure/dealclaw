@@ -79,3 +79,33 @@ export const priceHistory = pgTable(
     index("idx_ph_collection_time").on(table.collection, table.crawledAt),
   ],
 );
+
+export const coupangPriceSnapshots = pgTable(
+  "coupang_price_snapshots",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    coupangId: text("coupang_id").notNull(),
+    collection: text("collection").notNull(),
+    salePrice: integer("sale_price").notNull(),
+    originalPrice: integer("original_price"),
+    discountRate: integer("discount_rate").default(0),
+    unitPriceValue: integer("unit_price_value"),
+    isRocket: boolean("is_rocket").default(false),
+    rank: integer("rank"),
+    badges: text("badges").array(),
+    crawledAt: timestamp("crawled_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_cp_snap_product_time").on(table.productId, table.crawledAt),
+    index("idx_cp_snap_coupang_time").on(table.coupangId, table.crawledAt),
+    index("idx_cp_snap_collection_time").on(
+      table.collection,
+      table.crawledAt,
+    ),
+  ],
+);
