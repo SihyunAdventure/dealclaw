@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTD/PropertyList-1.0.dtd">
+<!--
+  hotinbeauty 크롤러 macOS launchd 스케줄.
+  실행 시간: 매일 09:00 / 21:00 (로컬 타임존, KST 전제).
+  템플릿: {{PROJECT_PATH}} 를 실제 프로젝트 절대경로로 치환 후 배치.
+  설치: scripts/install-mac-launchd.sh
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.hotinbeauty.crawl</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>{{PROJECT_PATH}}/scripts/mac-cron-wrapper.sh</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>{{PROJECT_PATH}}</string>
+
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict>
+      <key>Hour</key><integer>9</integer>
+      <key>Minute</key><integer>0</integer>
+    </dict>
+    <dict>
+      <key>Hour</key><integer>21</integer>
+      <key>Minute</key><integer>0</integer>
+    </dict>
+  </array>
+
+  <key>RunAtLoad</key>
+  <false/>
+
+  <key>StandardOutPath</key>
+  <string>{{HOME}}/Library/Logs/hotinbeauty/launchd.out.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>{{HOME}}/Library/Logs/hotinbeauty/launchd.err.log</string>
+
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>
