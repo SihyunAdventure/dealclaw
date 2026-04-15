@@ -62,7 +62,16 @@ export default async function Home() {
       {/* 푸터 */}
       <footer className="px-4 py-6 text-center text-[11px] text-muted-foreground border-t border-border mt-4">
         <p>쿠팡 파트너스 활동의 일환으로 수수료를 지급받을 수 있습니다.</p>
-        <p className="mt-1">© 2026 hotinbeauty</p>
+        <nav className="mt-2 flex justify-center gap-3">
+          <a href="/privacy" className="hover:text-foreground underline">
+            개인정보처리방침
+          </a>
+          <span aria-hidden>·</span>
+          <a href="/terms" className="hover:text-foreground underline">
+            이용약관
+          </a>
+        </nav>
+        <p className="mt-2">© 2026 hotinbeauty</p>
       </footer>
     </main>
   );
