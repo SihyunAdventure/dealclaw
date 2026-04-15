@@ -50,7 +50,7 @@ export function CollectionTabs({ collections }: CollectionTabsProps) {
   return (
     <div className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-20">
       <nav
-        className="flex gap-1.5 overflow-x-auto px-4 py-2 [&::-webkit-scrollbar]:hidden"
+        className="flex gap-1.5 overflow-x-auto px-4 py-2 min-h-[52px] items-center [&::-webkit-scrollbar]:hidden"
         style={{ scrollbarWidth: "none" }}
       >
         {collections.map((col) => (
@@ -58,7 +58,7 @@ export function CollectionTabs({ collections }: CollectionTabsProps) {
             key={col.slug}
             href={`#collection-${col.slug}`}
             className={cn(
-              "whitespace-nowrap rounded-full px-4 py-1.5 text-sm transition-colors",
+              "whitespace-nowrap rounded-full px-4 py-2.5 text-sm min-h-[40px] inline-flex items-center transition-colors",
               col.slug === activeSlug
                 ? "bg-primary text-primary-foreground font-medium"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",

@@ -5,7 +5,6 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "@/lib/db/schema";
 import { collections } from "@/src/data/collections";
-import { generateToken } from "@/lib/tokens";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 type VerifyState =
-  | { kind: "success"; collectionDisplay: string; manageToken: string }
+  | { kind: "success"; collectionDisplay: string }
   | { kind: "already_active"; collectionDisplay: string }
   | { kind: "invalid" }
   | { kind: "unsubscribed" };
@@ -36,19 +35,20 @@ async function verifyToken(token: string | undefined): Promise<VerifyState> {
   const collectionDisplay = col?.displayName ?? row.collection;
 
   if (row.status === "unsubscribed") return { kind: "unsubscribed" };
-  if (row.status === "active") return { kind: "already_active", collectionDisplay };
+  if (row.status === "active")
+    return { kind: "already_active", collectionDisplay };
 
-  const newToken = generateToken();
+  // 토큰을 rotate하지 않음 — 웰컴 메일의 해지 링크가 계속 유효해야 함.
+  // 해지는 이 같은 토큰을 사용 (per-subscription lifetime).
   await db
     .update(schema.subscriptions)
     .set({
       status: "active",
       verifiedAt: new Date(),
-      verifyToken: newToken,
     })
     .where(eq(schema.subscriptions.id, row.id));
 
-  return { kind: "success", collectionDisplay, manageToken: newToken };
+  return { kind: "success", collectionDisplay };
 }
 
 export default async function VerifyPage({
