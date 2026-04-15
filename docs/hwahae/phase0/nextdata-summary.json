@@ -1,0 +1,264 @@
+{
+  "trending": {
+    "rankings": {
+      "type": "array",
+      "length": 5,
+      "firstItemKeys": [
+        "id",
+        "shortcut_name",
+        "theme_icon_url",
+        "english_name",
+        "ranking_type",
+        "default_ranking_detail_id"
+      ]
+    },
+    "rankingsCategories": {
+      "type": "object",
+      "keys": [
+        "id",
+        "name",
+        "english_name",
+        "depth",
+        "ranking_type",
+        "is_advertised",
+        "max_rank",
+        "last_updated_at",
+        "last_updated_at_description",
+        "children",
+        "categories"
+      ]
+    },
+    "rankingProducts": {
+      "type": "object",
+      "keys": [
+        "meta",
+        "data"
+      ]
+    },
+    "categorySeoData": {
+      "type": "object",
+      "keys": [
+        "metaCategory",
+        "goodsNames"
+      ]
+    },
+    "statusCounts": {
+      "type": "object",
+      "keys": [
+        "review",
+        "product",
+        "brand"
+      ]
+    }
+  },
+  "category": {
+    "rankings": {
+      "type": "array",
+      "length": 5,
+      "firstItemKeys": [
+        "id",
+        "shortcut_name",
+        "theme_icon_url",
+        "english_name",
+        "ranking_type",
+        "default_ranking_detail_id"
+      ]
+    },
+    "rankingsCategories": {
+      "type": "object",
+      "keys": [
+        "id",
+        "name",
+        "english_name",
+        "depth",
+        "ranking_type",
+        "is_advertised",
+        "max_rank",
+        "last_updated_at",
+        "last_updated_at_description",
+        "children",
+        "categories"
+      ]
+    },
+    "rankingProducts": {
+      "type": "object",
+      "keys": [
+        "meta",
+        "data"
+      ]
+    },
+    "categorySeoData": {
+      "type": "object",
+      "keys": [
+        "metaCategory",
+        "goodsNames"
+      ]
+    },
+    "statusCounts": {
+      "type": "object",
+      "keys": [
+        "review",
+        "product",
+        "brand"
+      ]
+    }
+  },
+  "skin": {
+    "rankings": {
+      "type": "array",
+      "length": 5,
+      "firstItemKeys": [
+        "id",
+        "shortcut_name",
+        "theme_icon_url",
+        "english_name",
+        "ranking_type",
+        "default_ranking_detail_id"
+      ]
+    },
+    "rankingsCategories": {
+      "type": "object",
+      "keys": [
+        "id",
+        "name",
+        "english_name",
+        "depth",
+        "ranking_type",
+        "is_advertised",
+        "max_rank",
+        "last_updated_at",
+        "last_updated_at_description",
+        "children",
+        "categories"
+      ]
+    },
+    "rankingProducts": {
+      "type": "object",
+      "keys": [
+        "meta",
+        "data"
+      ]
+    },
+    "categorySeoData": {
+      "type": "object"
+    },
+    "statusCounts": {
+      "type": "object",
+      "keys": [
+        "review",
+        "product",
+        "brand"
+      ]
+    }
+  },
+  "age": {
+    "rankings": {
+      "type": "array",
+      "length": 5,
+      "firstItemKeys": [
+        "id",
+        "shortcut_name",
+        "theme_icon_url",
+        "english_name",
+        "ranking_type",
+        "default_ranking_detail_id"
+      ]
+    },
+    "rankingsCategories": {
+      "type": "object",
+      "keys": [
+        "id",
+        "name",
+        "english_name",
+        "depth",
+        "ranking_type",
+        "is_advertised",
+        "max_rank",
+        "last_updated_at",
+        "last_updated_at_description",
+        "children",
+        "categories"
+      ]
+    },
+    "rankingProducts": {
+      "type": "object",
+      "keys": [
+        "meta",
+        "data"
+      ]
+    },
+    "categorySeoData": {
+      "type": "object"
+    },
+    "statusCounts": {
+      "type": "object",
+      "keys": [
+        "review",
+        "product",
+        "brand"
+      ]
+    }
+  },
+  "brand": {
+    "session": {
+      "type": "object"
+    },
+    "rankings": {
+      "type": "array",
+      "length": 5,
+      "firstItemKeys": [
+        "id",
+        "shortcut_name",
+        "theme_icon_url",
+        "english_name",
+        "ranking_type",
+        "default_ranking_detail_id"
+      ]
+    },
+    "brandRankings": {
+      "type": "array",
+      "length": 10,
+      "firstItemKeys": [
+        "brand",
+        "rank_delta",
+        "is_rank_new"
+      ]
+    },
+    "brandProductsLists": {
+      "type": "array",
+      "length": 10,
+      "firstItemKeys": [
+        "0",
+        "1",
+        "2"
+      ]
+    },
+    "categorySeoData": {
+      "type": "object"
+    }
+  },
+  "awards": {
+    "year": {
+      "type": "number"
+    },
+    "awardsYears": {
+      "type": "array",
+      "length": 11,
+      "firstItemKeys": [
+        "id",
+        "year",
+        "is_legacy"
+      ]
+    },
+    "awardId": {
+      "type": "number"
+    },
+    "dehydratedState": {
+      "type": "object",
+      "keys": [
+        "mutations",
+        "queries"
+      ]
+    }
+  }
+}
