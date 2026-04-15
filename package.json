@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "crawl": "tsx src/scripts/run-crawl.ts",
+    "crawl:hwahae": "tsx src/scripts/run-hwahae-crawl.ts",
+    "crawl:hwahae:dry": "tsx src/scripts/run-hwahae-crawl.ts --dry-run",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
   },
