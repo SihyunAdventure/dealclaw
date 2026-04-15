@@ -1,6 +1,5 @@
 import { businessInfo as BUSINESS_INFO } from "@/lib/biz-info";
 
-const SITE_URL = process.env.SITE_URL || "https://hotinbeauty.com";
 const BRAND = "hotinbeauty";
 const AD_PREFIX = "(광고)";
 
