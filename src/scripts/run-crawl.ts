@@ -161,7 +161,10 @@ async function main() {
   console.log(`대상: ${targets.map((c) => c.displayName).join(", ")}`);
   console.log(`모드: ${dryRun ? "DRY RUN" : "LIVE"}\n`);
 
-  const { browser, page, cleanup } = await launchChrome();
+  const { browser, page, cleanup } = await launchChrome({
+    profileKey: "coupang",
+    offScreen: true,
+  });
 
   try {
     for (const col of targets) {
