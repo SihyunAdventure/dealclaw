@@ -3,6 +3,7 @@
 // 올영 스키마(oliveyoung.ts) 와 동일한 3계층(products / *_snapshots / crawl_runs) + 부가 테이블.
 // 네이밍 규칙: snake_case DB · camelCase drizzle prop · idx_hw_* 인덱스 · current_* 최신값 미러링.
 
+import { sql } from "drizzle-orm";
 import {
   pgTable,
   uuid,
@@ -14,7 +15,18 @@ import {
   doublePrecision,
   index,
   uniqueIndex,
+  unique,
+  foreignKey,
+  check,
 } from "drizzle-orm/pg-core";
+
+// 5 theme slug 은 화해 API 가 내려주는 고정 enum. DB 레벨에서도 체크 제약으로 검증.
+// 변경될 일 매우 드물지만 늘면 이 상수 + 마이그레이션 한 번에 업데이트.
+const VALID_THEME_SLUGS = ["trending", "category", "skin", "age", "brand"];
+const themeSlugCheck = (colName: string) =>
+  sql.raw(
+    `${colName} IN (${VALID_THEME_SLUGS.map((s) => `'${s}'`).join(", ")})`,
+  );
 
 // 1. 랭킹 테마 메타 (trending/category/skin/age/brand 5종)
 //    SSR JSON 의 props.pageProps.rankings[] 을 캐시. UI 탭 렌더용.
@@ -66,6 +78,13 @@ export const hwahaeRankingCategories = pgTable(
   (table) => [
     index("idx_hw_rank_cat_theme").on(table.themeEnglishName),
     index("idx_hw_rank_cat_parent").on(table.parentId),
+    // self-ref FK: 부모 카테고리 삭제 시 자식의 parent_id 를 NULL 로 — 트리 고아 방지.
+    foreignKey({
+      columns: [table.parentId],
+      foreignColumns: [table.id],
+      name: "fk_hw_rank_cat_parent",
+    }).onDelete("set null"),
+    check("ck_hw_rank_cat_theme", themeSlugCheck("theme_english_name")),
   ],
 );
 
@@ -155,6 +174,13 @@ export const hwahaeProducts = pgTable(
     index("idx_hw_products_current_rank").on(table.currentRank),
     index("idx_hw_products_brand").on(table.brandId),
     index("idx_hw_products_last_crawled").on(table.lastCrawledAt),
+    // currentRankTheme 은 nullable — NULL 은 check 통과, 값 있으면 5 slug 중 하나.
+    check(
+      "ck_hw_products_current_rank_theme",
+      sql.raw(
+        `current_rank_theme IS NULL OR current_rank_theme IN (${VALID_THEME_SLUGS.map((s) => `'${s}'`).join(", ")})`,
+      ),
+    ),
   ],
 );
 
@@ -200,6 +226,7 @@ export const hwahaeRankingSnapshots = pgTable(
       table.rank,
       table.crawledAt,
     ),
+    check("ck_hw_snap_theme", themeSlugCheck("theme")),
   ],
 );
 
@@ -270,12 +297,12 @@ export const hwahaeAwards = pgTable(
       .defaultNow(),
   },
   (table) => [
-    uniqueIndex("uniq_hw_awards_identity").on(
-      table.productId,
-      table.year,
-      table.theme,
-      table.category,
-    ),
+    // Postgres 기본: NULL ≠ NULL 로 취급 → category 가 null 인 같은 (product, year, theme) 중복 insert 가능.
+    // unique().nullsNotDistinct() 로 NULL 을 '같은 값' 으로 비교하게 강제 (PG 15+).
+    // uniqueIndex 는 nullsNotDistinct 미지원이라 constraint 방식으로 전환.
+    unique("uniq_hw_awards_identity")
+      .on(table.productId, table.year, table.theme, table.category)
+      .nullsNotDistinct(),
     index("idx_hw_awards_product").on(table.productId),
     index("idx_hw_awards_year").on(table.year),
   ],
@@ -284,17 +311,29 @@ export const hwahaeAwards = pgTable(
 // 9. 실행 메타.
 //    theme 별 분할 실행 가능: 한 번의 run 은 하나의 (theme, theme_id) 만 크롤할 수도 있고
 //    theme 전체를 한 run 으로 처리할 수도 있음.
-export const hwahaeCrawlRuns = pgTable("hwahae_crawl_runs", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  theme: text("theme").notNull(),
-  themeId: integer("theme_id"), // null = theme 전체
-  productCount: integer("product_count").notNull().default(0),
-  newEntryCount: integer("new_entry_count").notNull().default(0),
-  avgRating: numeric("avg_rating", { precision: 3, scale: 2 }),
-  status: text("status").notNull().default("completed"),
-  errorMessage: text("error_message"),
-  startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
-  finishedAt: timestamp("finished_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const hwahaeCrawlRuns = pgTable(
+  "hwahae_crawl_runs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    theme: text("theme").notNull(),
+    themeId: integer("theme_id"), // null = theme 전체
+    productCount: integer("product_count").notNull().default(0),
+    newEntryCount: integer("new_entry_count").notNull().default(0),
+    avgRating: numeric("avg_rating", { precision: 3, scale: 2 }),
+    status: text("status").notNull().default("completed"),
+    errorMessage: text("error_message"),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+    finishedAt: timestamp("finished_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // run 이력 조회의 기본 쿼리: "이 theme 의 최근 N 개 run" → (theme, themeId, startedAt desc).
+    index("idx_hw_crawl_runs_theme_time").on(
+      table.theme,
+      table.themeId,
+      table.startedAt,
+    ),
+    check("ck_hw_crawl_runs_theme", themeSlugCheck("theme")),
+  ],
+);
