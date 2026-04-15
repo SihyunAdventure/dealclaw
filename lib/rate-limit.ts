@@ -1,15 +1,15 @@
-import { eq, and, gte, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "@/lib/db/schema";
 
 /**
  * rate_limits 테이블 기반 hourly fixed-window.
- * key/scope 조합 단위로 count를 증가시키고, windowStart가 1시간 지나면 리셋.
- * 분산 환경에서 완벽한 원자성은 아니지만 SES 스팸 방지용으로는 충분.
+ * 원자성: INSERT ... ON CONFLICT ... DO UPDATE 단일 statement로
+ * 동시 요청 race condition 방지 (eng review #2).
  */
 
-const WINDOW_MS = 60 * 60 * 1000;
+const DEFAULT_WINDOW_MS = 60 * 60 * 1000;
 
 export interface RateLimitOptions {
   key: string;
@@ -35,58 +35,45 @@ export async function checkAndBump(
 ): Promise<RateLimitResult> {
   const db = getDb();
   const now = new Date();
-  const windowMs = options.windowMs ?? WINDOW_MS;
+  const windowMs = options.windowMs ?? DEFAULT_WINDOW_MS;
   const windowCutoff = new Date(now.getTime() - windowMs);
 
-  const existing = await db
-    .select()
-    .from(schema.rateLimits)
-    .where(
-      and(
-        eq(schema.rateLimits.key, options.key),
-        eq(schema.rateLimits.scope, options.scope),
-      ),
-    )
-    .limit(1);
+  const rows = await db.execute<{
+    count: number | string;
+    window_start: string;
+  }>(sql`
+    INSERT INTO rate_limits (key, scope, count, window_start)
+    VALUES (${options.key}, ${options.scope}, 1, ${now})
+    ON CONFLICT (key, scope) DO UPDATE SET
+      count = CASE
+        WHEN rate_limits.window_start < ${windowCutoff} THEN 1
+        ELSE rate_limits.count + 1
+      END,
+      window_start = CASE
+        WHEN rate_limits.window_start < ${windowCutoff} THEN ${now}
+        ELSE rate_limits.window_start
+      END
+    RETURNING count, window_start
+  `);
 
-  if (existing.length === 0) {
-    await db.insert(schema.rateLimits).values({
-      key: options.key,
-      scope: options.scope,
-      count: 1,
-      windowStart: now,
-    });
-    return { allowed: true, remaining: options.limit - 1, retryAfterMs: 0 };
+  const row = Array.isArray(rows)
+    ? rows[0]
+    : (rows as { rows?: Array<{ count: number | string; window_start: string }> }).rows?.[0];
+  if (!row) {
+    return { allowed: false, remaining: 0, retryAfterMs: windowMs };
   }
 
-  const row = existing[0];
+  const count = typeof row.count === "string" ? parseInt(row.count, 10) : row.count;
+  const windowStartMs = new Date(row.window_start).getTime();
 
-  // 윈도우 만료 → 리셋
-  if (row.windowStart < windowCutoff) {
-    await db
-      .update(schema.rateLimits)
-      .set({ count: 1, windowStart: now })
-      .where(eq(schema.rateLimits.id, row.id));
-    return { allowed: true, remaining: options.limit - 1, retryAfterMs: 0 };
-  }
-
-  // 윈도우 내 — 한도 체크
-  if (row.count >= options.limit) {
-    const retryAfterMs = Math.max(
-      0,
-      row.windowStart.getTime() + windowMs - now.getTime(),
-    );
+  if (count > options.limit) {
+    const retryAfterMs = Math.max(0, windowStartMs + windowMs - now.getTime());
     return { allowed: false, remaining: 0, retryAfterMs };
   }
 
-  await db
-    .update(schema.rateLimits)
-    .set({ count: sql`${schema.rateLimits.count} + 1` })
-    .where(eq(schema.rateLimits.id, row.id));
-
   return {
     allowed: true,
-    remaining: options.limit - row.count - 1,
+    remaining: options.limit - count,
     retryAfterMs: 0,
   };
 }
