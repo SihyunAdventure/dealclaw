@@ -41,6 +41,14 @@ export function DealListItem({
   function handleClick(e: React.MouseEvent) {
     // 명령-클릭(맥) / Ctrl-클릭(윈) / 휠 클릭은 기본 동작(새 탭 열기) 유지
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+    // 사용자가 이미 이 세션에서 모달을 닫은 적 있으면 바로 쿠팡으로
+    // (affiliate 클릭 보전 — 재방문 유저의 구매 의도를 존중)
+    if (
+      typeof window !== "undefined" &&
+      sessionStorage.getItem("hib_modal_dismissed") === "1"
+    ) {
+      return;
+    }
     e.preventDefault();
     open({
       collection,

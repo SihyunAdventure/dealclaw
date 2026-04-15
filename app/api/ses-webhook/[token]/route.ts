@@ -3,27 +3,26 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { inArray } from "drizzle-orm";
 import * as schema from "@/lib/db/schema";
+import { verifySnsMessage, SnsVerifyError } from "@/lib/sns-verify";
+import type { SnsMessage } from "@/lib/sns-verify";
 
 /**
  * SES → SNS 알림 수신. SNS가 엔드포인트로 바로 POST한다.
- * URL path에 공유 비밀을 포함해 인증 (HIB_SES_WEBHOOK_TOKEN).
+ *
+ * 2단 검증:
+ *  1. URL path 공유 비밀 (HIB_SES_WEBHOOK_TOKEN) — timing-safe compare.
+ *     토큰 탈취 시 path 인증은 뚫리지만 서명 검증에서 막힘.
+ *  2. SNS 서명 검증 (SignatureVersion 1/2, AWS 인증서 기반).
+ *     다른 사람이 HIB_SES_WEBHOOK_TOKEN을 알아내도 유효한 SNS 서명이
+ *     없으면 해지 API 호출 불가 = mass unsubscribe 공격 차단.
+ *
  * 첫 구독 시 SNS는 SubscriptionConfirmation 메시지를 보내며,
  * 본 핸들러는 SubscribeURL을 GET 하여 자동 확인한다.
- *
- * 운영 주의: 완전한 SNS 서명 검증은 추후 추가(TODO).
- * 현재는 path-token + timing-safe compare 만.
  */
 
-interface SnsEnvelope {
+interface SnsEnvelope extends SnsMessage {
   Type: "SubscriptionConfirmation" | "Notification" | "UnsubscribeConfirmation";
-  MessageId: string;
-  Token?: string;
-  TopicArn: string;
   Message: string;
-  Timestamp: string;
-  SignatureVersion: string;
-  Signature: string;
-  SigningCertURL: string;
   SubscribeURL?: string;
 }
 
@@ -98,6 +97,18 @@ export async function POST(
     envelope = JSON.parse(bodyText);
   } catch {
     return new Response("bad json", { status: 400 });
+  }
+
+  // SNS 서명 검증 — path 토큰 탈취만으론 요청 위조 불가.
+  // dev 환경 등 SIGNATURE_SKIP 플래그로 우회 가능 (프로덕션에선 설정 금지)
+  if (process.env.HIB_SNS_VERIFY_SKIP !== "1") {
+    try {
+      await verifySnsMessage(envelope);
+    } catch (err) {
+      const msg = err instanceof SnsVerifyError ? err.message : "verify failed";
+      console.error("[ses-webhook] SNS 서명 검증 실패:", msg);
+      return new Response(`invalid signature: ${msg}`, { status: 403 });
+    }
   }
 
   if (envelope.Type === "SubscriptionConfirmation") {
