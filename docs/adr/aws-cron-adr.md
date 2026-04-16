@@ -1,7 +1,12 @@
 # ADR: AWS notique-agent 계정 크롤러 cron 배포
 
-상태: Proposed
-날짜: 2026-04-15
+> **상태: Superseded (2026-04-17)** — 결정 B (ECS Fargate)는 실제 배포되지 않았고,
+> 운영은 **M3 MacBook + Tailscale + macOS launchd** 로 전환됨.
+> 후속 결정·운영 가이드: `docs/ec2-to-m3-migration.md`, AGENTS.md "Operations / Infra" 섹션.
+> 이 문서는 의사결정 히스토리 보존 목적으로 남깁니다.
+
+상태: Superseded
+날짜: 2026-04-15 (작성), 2026-04-17 (superseded)
 관련 이슈: SIH-558
 선행 이슈: SIH-553(스키마), SIH-555(SES), SIH-556(detect), SIH-557(실측)
 

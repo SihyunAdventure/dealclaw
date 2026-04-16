@@ -209,6 +209,18 @@ export function buildAwardRow(a: HwahaeAwardRecord, crawledAt: Date) {
 
 // ─────────── DB 쓰기 ───────────
 
+// drizzle SQL builder는 .values(rows)에서 placeholder를 재귀 mergeQueries 로 합친다.
+// 12만+ row를 한 번에 넘기면 RangeError: Maximum call stack size exceeded.
+// neon-http는 트랜잭션 미지원이라 chunk 간 atomicity는 어차피 없음 → 단순 분할 OK.
+const INSERT_CHUNK_SIZE = 1000;
+
+function chunkRows<T>(rows: T[], size = INSERT_CHUNK_SIZE): T[][] {
+  if (rows.length <= size) return [rows];
+  const out: T[][] = [];
+  for (let i = 0; i < rows.length; i += size) out.push(rows.slice(i, i + size));
+  return out;
+}
+
 export async function upsertHwahaeThemes(
   db: HwahaeDb,
   themes: HwahaeThemeMeta[],
@@ -396,9 +408,11 @@ export async function insertHwahaeRankingSnapshots(
 ): Promise<number> {
   if (products.length === 0) return 0;
   const rows = products.map((p) => buildRankingSnapshotRow(p, crawledAt));
-  await (db.insert(hwahaeRankingSnapshots) as unknown as {
-    values: (v: unknown) => Promise<unknown>;
-  }).values(rows);
+  for (const batch of chunkRows(rows)) {
+    await (db.insert(hwahaeRankingSnapshots) as unknown as {
+      values: (v: unknown) => Promise<unknown>;
+    }).values(batch);
+  }
   return rows.length;
 }
 
@@ -409,9 +423,11 @@ export async function insertHwahaeBrandRankingSnapshots(
 ): Promise<number> {
   if (brands.length === 0) return 0;
   const rows = brands.map((b) => buildBrandRankingSnapshotRow(b, crawledAt));
-  await (db.insert(hwahaeBrandRankingSnapshots) as unknown as {
-    values: (v: unknown) => Promise<unknown>;
-  }).values(rows);
+  for (const batch of chunkRows(rows)) {
+    await (db.insert(hwahaeBrandRankingSnapshots) as unknown as {
+      values: (v: unknown) => Promise<unknown>;
+    }).values(batch);
+  }
   return rows.length;
 }
 
@@ -422,9 +438,11 @@ export async function insertHwahaeProductTopics(
 ): Promise<number> {
   const rows = products.flatMap((p) => buildProductTopicRows(p, crawledAt));
   if (rows.length === 0) return 0;
-  await (db.insert(hwahaeProductTopics) as unknown as {
-    values: (v: unknown) => Promise<unknown>;
-  }).values(rows);
+  for (const batch of chunkRows(rows)) {
+    await (db.insert(hwahaeProductTopics) as unknown as {
+      values: (v: unknown) => Promise<unknown>;
+    }).values(batch);
+  }
   return rows.length;
 }
 
@@ -436,13 +454,15 @@ export async function insertHwahaeAwards(
   if (awards.length === 0) return 0;
   const rows = awards.map((a) => buildAwardRow(a, crawledAt));
   // uniq_hw_awards_identity(nullsNotDistinct) 로 중복 방지. 기록은 append-only 의도라 update 불필요.
-  await (db.insert(hwahaeAwards) as unknown as {
-    values: (v: unknown) => {
-      onConflictDoNothing: () => Promise<unknown>;
-    };
-  })
-    .values(rows)
-    .onConflictDoNothing();
+  for (const batch of chunkRows(rows)) {
+    await (db.insert(hwahaeAwards) as unknown as {
+      values: (v: unknown) => {
+        onConflictDoNothing: () => Promise<unknown>;
+      };
+    })
+      .values(batch)
+      .onConflictDoNothing();
+  }
   return rows.length;
 }
 

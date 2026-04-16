@@ -70,14 +70,16 @@ async function extractRawProducts(page: Page): Promise<RawProduct[]> {
 export async function crawlCoupangSearch(
   page: Page,
   query: string,
-  options: { listSize?: number } = {},
+  options: { listSize?: number; sorter?: string } = {},
 ): Promise<CrawledProduct[]> {
   const encodedQuery = encodeURIComponent(query);
   const listSize = options.listSize ?? 48;
-  const url = `https://www.coupang.com/np/search?q=${encodedQuery}&channel=user&sorter=priceAsc&listSize=${listSize}`;
+  const sorter = options.sorter ?? "priceAsc";
+  const url = `https://www.coupang.com/np/search?q=${encodedQuery}&channel=user&sorter=${sorter}&listSize=${listSize}`;
 
   console.log(`  → ${url}`);
-  await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+  // listSize=96은 페이지 가중치가 약 2배. 30s 기본 timeout은 한계 근접 → 45s 여유.
+  await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
 
   // 초기 대기 3~7초 랜덤 — 고정 5초 패턴 탐지 회피
   const initialWait = 3000 + Math.floor(Math.random() * 4000);
