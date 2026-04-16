@@ -1,6 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { HomeSignalViewModel, PriceChangeSource } from "@/lib/signals/price-changes";
+import type {
+  HomeSignalViewModel,
+  PriceChangeSource,
+} from "@/lib/signals/price-changes";
 
 function formatPrice(price: number) {
   return price.toLocaleString("ko-KR");
@@ -33,16 +36,16 @@ export function PriceChangeCard({ signal }: { signal: HomeSignalViewModel }) {
       href={detailHref}
       data-track="section_click"
       data-track-source={source}
-      className="flex gap-3 border-b border-border px-4 py-3 transition-colors hover:bg-muted/50"
+      className="flex gap-3 border-t border-border px-4 py-4 transition-colors hover:bg-muted/50 md:px-6"
     >
-      <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
+      <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-muted">
         {imageUrl ? (
           <Image
             src={imageUrl}
             alt={name}
             fill
-            className="object-contain p-1"
-            sizes="80px"
+            className="object-contain p-1.5"
+            sizes="96px"
             unoptimized
           />
         ) : (
@@ -51,15 +54,15 @@ export function PriceChangeCard({ signal }: { signal: HomeSignalViewModel }) {
           </div>
         )}
       </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex items-center gap-1.5 flex-wrap">
           {hasDrop && (
-            <span className="inline-flex items-center rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] font-bold text-destructive">
+            <span className="inline-flex items-center rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-bold text-destructive">
               새 최저가 -{dropRate}%
             </span>
           )}
           {hasRankJump && currentRank != null && (
-            <span className="inline-flex items-center rounded bg-accent px-1.5 py-0.5 text-[10px] font-semibold text-accent-foreground">
+            <span className="inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold text-accent-foreground">
               랭킹 ↑{rankDelta} · {currentRank}위
             </span>
           )}
@@ -72,22 +75,24 @@ export function PriceChangeCard({ signal }: { signal: HomeSignalViewModel }) {
             {brand}
           </p>
         )}
-        <p className="line-clamp-2 text-[13px] leading-snug text-foreground">
+        <p className="line-clamp-2 text-sm leading-snug text-foreground md:text-[15px]">
           {name}
         </p>
-        <div className="flex items-baseline gap-1.5 flex-wrap">
-          <span className="text-[15px] font-bold text-foreground">
+        <div className="flex items-baseline gap-2 flex-wrap">
+          <span className="text-[18px] font-bold text-foreground">
             {formatPrice(currentPrice)}
             <span className="text-xs font-normal">원</span>
           </span>
           {referencePrice && referencePrice > currentPrice ? (
-            <span className="text-[11px] text-muted-foreground line-through">
+            <span className="text-xs text-muted-foreground line-through">
               {formatPrice(referencePrice)}원
             </span>
           ) : null}
         </div>
         {collection && (
-          <p className="line-clamp-1 text-[11px] text-muted-foreground">{collection}</p>
+          <p className="line-clamp-1 text-[11px] text-muted-foreground">
+            {collection}
+          </p>
         )}
       </div>
     </Link>

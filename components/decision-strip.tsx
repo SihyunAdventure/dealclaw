@@ -24,24 +24,24 @@ export function DecisionStrip({ summary }: { summary: HomeSummaryViewModel }) {
   const signal = summary.strongestSignal;
 
   return (
-    <section className="border-b border-border bg-card/70 px-4 py-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
+    <section className="border-b border-border bg-card/70 px-4 py-5 md:px-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="max-w-2xl">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             strongest opportunity
           </p>
-          <h2 className="mt-1 font-heading text-xl font-semibold tracking-tight text-foreground">
+          <h2 className="mt-1 font-heading text-2xl font-semibold tracking-tight text-foreground md:text-[2rem]">
             {signal ? "지금 볼 이유가 가장 강한 상품" : "오늘은 새로운 buy-now 신호가 없어요"}
           </h2>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-2 text-xs text-muted-foreground md:text-sm">
             마지막 업데이트 {formatUpdatedAt(summary.updatedAt)}
           </p>
         </div>
-        <div className="flex flex-wrap justify-end gap-1.5 text-[10px] font-medium">
-          <span className="rounded-full bg-muted px-2 py-1 text-muted-foreground">
+        <div className="flex flex-wrap gap-2 text-[11px] font-medium md:justify-end">
+          <span className="rounded-full bg-muted px-2.5 py-1.5 text-muted-foreground">
             쿠팡 {summary.counts.coupang ?? "—"}건
           </span>
-          <span className="rounded-full bg-muted px-2 py-1 text-muted-foreground">
+          <span className="rounded-full bg-muted px-2.5 py-1.5 text-muted-foreground">
             올영 {summary.counts.oliveyoung ?? "—"}건
           </span>
         </div>
@@ -52,7 +52,7 @@ export function DecisionStrip({ summary }: { summary: HomeSummaryViewModel }) {
           href={signal.detailHref}
           data-track="home_strip_click"
           data-track-source={signal.source}
-          className="mt-4 block rounded-xl border border-border bg-background px-4 py-3 transition-colors hover:bg-muted/40"
+          className="mt-4 block rounded-2xl border border-border bg-background px-4 py-4 transition-colors hover:bg-muted/40"
         >
           <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             <span>{sourceLabel(signal.source)}</span>
@@ -67,15 +67,15 @@ export function DecisionStrip({ summary }: { summary: HomeSummaryViewModel }) {
               </span>
             )}
           </div>
-          <p className="mt-2 line-clamp-2 text-sm font-medium leading-snug text-foreground">
+          <p className="mt-3 max-w-2xl line-clamp-2 text-[15px] font-medium leading-snug text-foreground md:text-base">
             {signal.name}
           </p>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-lg font-semibold text-foreground">
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl font-semibold text-foreground md:text-[1.75rem]">
               {formatPrice(signal.currentPrice)}원
             </span>
             {signal.referencePrice && signal.referencePrice > signal.currentPrice ? (
-              <span className="text-xs text-muted-foreground line-through">
+              <span className="text-sm text-muted-foreground line-through">
                 {formatPrice(signal.referencePrice)}원
               </span>
             ) : null}

@@ -23,19 +23,21 @@ export default async function Home() {
 
   return (
     <main className="flex-1 bg-background">
-      <header className="border-b border-border px-4 py-6">
-        <h1 className="font-heading text-2xl font-semibold tracking-tight text-foreground">
-          hotinbeauty
-        </h1>
-        <p className="mt-1 text-xs text-muted-foreground">
-          지금 살 이유가 생긴 뷰티 가격 변화만 먼저 보여드립니다.
-        </p>
+      <header className="border-b border-border px-4 py-6 md:px-6">
+        <div className="max-w-2xl">
+          <h1 className="font-heading text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
+            hotinbeauty
+          </h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground md:text-[15px]">
+            올리브영과 쿠팡에서 <strong className="text-foreground">지금 살 이유가 생긴 상품</strong>만 먼저 추려 보여드립니다.
+          </p>
+        </div>
       </header>
 
       <DecisionStrip summary={summary} />
 
       {allFailed ? (
-        <section className="border-b border-border px-4 py-10 text-center">
+        <section className="border-b border-border px-4 py-10 text-center md:px-6">
           <p className="text-sm font-medium text-foreground">
             지금 홈 신호를 불러오지 못했어요
           </p>
@@ -45,23 +47,25 @@ export default async function Home() {
         </section>
       ) : null}
 
-      <PlatformSignalSection
-        title="쿠팡에서 지금 싸진 것"
-        description="최근 7일 기준 새 최저가 신호가 생긴 상품만 추렸어요."
-        emptyTitle="지금은 눈에 띄는 인하가 없어요"
-        emptyDescription="다음 수집 사이클에 새 쿠팡 신호를 다시 확인합니다."
-        result={coupang}
-      />
+      <div className="lg:grid lg:grid-cols-2 lg:divide-x lg:divide-border">
+        <PlatformSignalSection
+          title="쿠팡에서 지금 싸진 것"
+          description="최근 7일 기준 새 최저가 신호가 생긴 상품만 추렸어요."
+          emptyTitle="지금은 눈에 띄는 인하가 없어요"
+          emptyDescription="다음 수집 사이클에 새 쿠팡 신호를 다시 확인합니다."
+          result={coupang}
+        />
 
-      <PlatformSignalSection
-        title="올리브영에서 지금 변한 것"
-        description="가격 하락과 랭킹 상승이 함께 보이는 상품을 먼저 보여드려요."
-        emptyTitle="지금은 순위 변동이 크지 않아요"
-        emptyDescription="다음 수집 사이클에 새 올리브영 신호를 다시 확인합니다."
-        result={oliveyoung}
-      />
+        <PlatformSignalSection
+          title="올리브영에서 지금 변한 것"
+          description="가격 하락과 랭킹 상승이 함께 보이는 상품을 먼저 보여드려요."
+          emptyTitle="지금은 순위 변동이 크지 않아요"
+          emptyDescription="다음 수집 사이클에 새 올리브영 신호를 다시 확인합니다."
+          result={oliveyoung}
+        />
+      </div>
 
-      <footer className="mt-4 border-t border-border px-4 py-6 text-center text-[11px] text-muted-foreground">
+      <footer className="mt-4 border-t border-border px-4 py-6 text-center text-[11px] text-muted-foreground md:px-6">
         <p>쿠팡 파트너스 및 올리브영 큐레이터 활동의 일환으로 수수료를 지급받을 수 있습니다.</p>
         <nav className="mt-2 flex justify-center gap-3">
           <a href="/privacy" className="underline hover:text-foreground">
