@@ -104,8 +104,9 @@ export async function crawlOliveYoungRanking(
   }
 
   // 랭킹 로드 완료 후 lazy content 를 위해 잠시 대기 + scroll.
+  // 올영 베스트 페이지는 100개를 lazy-load하므로 충분히 스크롤해야 함.
   await new Promise((r) => setTimeout(r, 2000));
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 20; i++) {
     await page.evaluate(() => window.scrollBy(0, 800));
     await new Promise((r) => setTimeout(r, 400));
   }

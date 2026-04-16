@@ -1,7 +1,8 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "@/lib/db/schema";
-import { desc, gte } from "drizzle-orm";
+import { desc, gte, inArray } from "drizzle-orm";
+import { coupangCategories } from "@/src/data/coupang-categories";
 
 export type PriceChangeSource = "oliveyoung" | "coupang";
 
@@ -20,6 +21,12 @@ export interface HomeSignalViewModel {
   detailHref: string;
   updatedAt: Date;
   score: number;
+  discountRate: number;
+  unitPriceValue: number | null;
+  unitPriceText: string | null;
+  isRocket: boolean;
+  reviewCount: number;
+  ratingAverage: number | null;
 }
 
 export interface SourceSignalResult {
@@ -32,6 +39,7 @@ export interface SourceSignalResult {
 
 export interface HomeSummaryViewModel {
   strongestSignal: HomeSignalViewModel | null;
+  topSignals: HomeSignalViewModel[];
   counts: Record<PriceChangeSource, number | null>;
   updatedAt: Date | null;
 }
@@ -142,11 +150,12 @@ export function getHomeSummary(input: {
     oliveyoung: input.oliveyoung?.totalCount ?? null,
   };
 
-  const candidates = [input.coupang?.items[0], input.oliveyoung?.items[0]].filter(
-    (item): item is HomeSignalViewModel => item != null,
-  );
+  const allItems = [
+    ...(input.coupang?.items ?? []),
+    ...(input.oliveyoung?.items ?? []),
+  ];
 
-  candidates.sort((a, b) => {
+  allItems.sort((a, b) => {
     const scoreA = a.score + getFreshnessBonus(a.updatedAt);
     const scoreB = b.score + getFreshnessBonus(b.updatedAt);
 
@@ -154,14 +163,17 @@ export function getHomeSummary(input: {
     return b.updatedAt.getTime() - a.updatedAt.getTime();
   });
 
+  const topSignals = allItems.slice(0, 3);
+
   return {
-    strongestSignal: candidates[0] ?? null,
+    strongestSignal: topSignals[0] ?? null,
+    topSignals,
     counts,
     updatedAt: newestDate([input.coupang?.updatedAt ?? null, input.oliveyoung?.updatedAt ?? null]),
   };
 }
 
-export async function getCoupangSignals(limit = 8): Promise<SourceSignalResult> {
+export async function getCoupangSignals(limit?: number): Promise<SourceSignalResult> {
   const db = getDb();
   if (!db) {
     return {
@@ -183,7 +195,9 @@ export async function getCoupangSignals(limit = 8): Promise<SourceSignalResult> 
       })
       .from(schema.coupangPriceSnapshots)
       .where(gte(schema.coupangPriceSnapshots.crawledAt, cutoffDate())),
-    db.select().from(schema.products).orderBy(desc(schema.products.lastCrawledAt)),
+    db.select().from(schema.products)
+      .where(inArray(schema.products.collection, coupangCategories.map((c) => c.slug)))
+      .orderBy(desc(schema.products.lastCrawledAt)),
   ]);
 
   const snapshotMap = groupByProductId(snapshots);
@@ -196,8 +210,6 @@ export async function getCoupangSignals(limit = 8): Promise<SourceSignalResult> 
       product.salePrice,
       previousSnapshots.map((snapshot) => snapshot.salePrice),
     );
-
-    if (priceSignal.dropRate < 3) continue;
 
     items.push({
       source: "coupang",
@@ -214,11 +226,20 @@ export async function getCoupangSignals(limit = 8): Promise<SourceSignalResult> 
       detailHref: `/p/cp/${product.coupangId}`,
       updatedAt: product.lastCrawledAt,
       score: calculateCoupangScore(priceSignal.dropRate),
+      discountRate: product.discountRate ?? 0,
+      unitPriceValue: product.unitPriceValue ?? null,
+      unitPriceText: product.unitPriceText ?? null,
+      isRocket: product.isRocket ?? false,
+      reviewCount: product.reviewCount ?? 0,
+      ratingAverage: product.ratingAverage ?? null,
     });
   }
 
+  // Global sort: score (verified drop) first, then vendor discountRate as
+  // transitional tiebreaker while price history is sparse.
   items.sort((a, b) => {
     if (a.score !== b.score) return b.score - a.score;
+    if (a.discountRate !== b.discountRate) return b.discountRate - a.discountRate;
     if (a.updatedAt.getTime() !== b.updatedAt.getTime()) {
       return b.updatedAt.getTime() - a.updatedAt.getTime();
     }
@@ -229,7 +250,7 @@ export async function getCoupangSignals(limit = 8): Promise<SourceSignalResult> 
 
   return {
     source: "coupang",
-    items: items.slice(0, limit),
+    items: limit != null ? items.slice(0, limit) : items,
     totalCount: items.length,
     updatedAt,
     isStale: isStale(updatedAt),
@@ -298,6 +319,12 @@ export async function getOliveYoungSignals(
       detailHref: `/p/oy/${product.productId}`,
       updatedAt: product.lastCrawledAt,
       score: calculateOliveYoungScore(rankDelta, priceSignal.dropRate),
+      discountRate: product.currentDiscountRate ?? 0,
+      unitPriceValue: null,
+      unitPriceText: null,
+      isRocket: false,
+      reviewCount: 0,
+      ratingAverage: null,
     });
   }
 
@@ -317,6 +344,88 @@ export async function getOliveYoungSignals(
     source: "oliveyoung",
     items: items.slice(0, limit),
     totalCount: items.length,
+    updatedAt,
+    isStale: isStale(updatedAt),
+  };
+}
+
+export interface OliveYoungRankingItem {
+  productId: string;
+  rank: number;
+  rankDelta: number | null;
+  name: string;
+  brand: string | null;
+  imageUrl: string | null;
+  currentPrice: number;
+  originalPrice: number;
+  discountRate: number;
+  detailHref: string;
+  isTodayDeal: boolean;
+  flags: string[];
+}
+
+export interface OliveYoungRankingResult {
+  items: OliveYoungRankingItem[];
+  updatedAt: Date | null;
+  isStale: boolean;
+}
+
+export async function getOliveYoungRanking(): Promise<OliveYoungRankingResult> {
+  const db = getDb();
+  if (!db) {
+    return { items: [], updatedAt: null, isStale: false };
+  }
+
+  const [snapshots, products] = await Promise.all([
+    db
+      .select({
+        productId: schema.oliveyoungRankingSnapshots.productId,
+        rank: schema.oliveyoungRankingSnapshots.rank,
+        crawledAt: schema.oliveyoungRankingSnapshots.crawledAt,
+      })
+      .from(schema.oliveyoungRankingSnapshots)
+      .where(gte(schema.oliveyoungRankingSnapshots.crawledAt, cutoffDate())),
+    db
+      .select()
+      .from(schema.oliveyoungProducts)
+      .orderBy(desc(schema.oliveyoungProducts.lastCrawledAt)),
+  ]);
+
+  const snapshotMap = groupByProductId(snapshots);
+  const items: OliveYoungRankingItem[] = [];
+
+  for (const product of products) {
+    if (product.currentRank == null) continue;
+
+    const history = snapshotMap.get(product.productId) ?? [];
+    const previousSnapshots = history.slice(0, -1);
+    const rankDelta = calculateRankDelta(
+      product.currentRank,
+      previousSnapshots.map((s) => s.rank),
+    );
+
+    items.push({
+      productId: product.productId,
+      rank: product.currentRank,
+      rankDelta,
+      name: product.name,
+      brand: product.brand || null,
+      imageUrl: product.imageUrl || null,
+      currentPrice: product.currentSalePrice,
+      originalPrice: product.currentOriginalPrice,
+      discountRate: product.currentDiscountRate,
+      detailHref: `/p/oy/${product.productId}`,
+      isTodayDeal: product.currentIsTodayDeal,
+      flags: product.currentFlags,
+    });
+  }
+
+  items.sort((a, b) => a.rank - b.rank);
+
+  const updatedAt = products[0]?.lastCrawledAt ?? null;
+
+  return {
+    items: items.slice(0, 100),
     updatedAt,
     isStale: isStale(updatedAt),
   };

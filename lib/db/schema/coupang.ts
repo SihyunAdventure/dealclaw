@@ -24,6 +24,8 @@ export const products = pgTable(
     unitPriceValue: integer("unit_price_value"),
     isRocket: boolean("is_rocket").default(false),
     badges: text("badges").array(),
+    reviewCount: integer("review_count").default(0),
+    ratingAverage: integer("rating_average"),
     lastCrawledAt: timestamp("last_crawled_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
