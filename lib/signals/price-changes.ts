@@ -391,22 +391,36 @@ export async function getOliveYoungRanking(): Promise<OliveYoungRankingResult> {
       .orderBy(desc(schema.oliveyoungProducts.lastCrawledAt)),
   ]);
 
+  // 최신 크롤 배치만 현재 TOP 100으로 사용.
+  // products.currentRank는 과거 rank가 stale하게 남아있어 중복 발생 → 최신 snapshot 기준으로 재구성.
+  const latestCrawledAt = snapshots.reduce<Date | null>(
+    (max, s) => (max == null || s.crawledAt > max ? s.crawledAt : max),
+    null,
+  );
+  const latestSnapshots = latestCrawledAt
+    ? snapshots.filter(
+        (s) => s.crawledAt.getTime() === latestCrawledAt.getTime(),
+      )
+    : [];
+
   const snapshotMap = groupByProductId(snapshots);
+  const productMap = new Map(products.map((p) => [p.productId, p]));
   const items: OliveYoungRankingItem[] = [];
 
-  for (const product of products) {
-    if (product.currentRank == null) continue;
+  for (const latest of latestSnapshots) {
+    const product = productMap.get(latest.productId);
+    if (!product) continue;
 
     const history = snapshotMap.get(product.productId) ?? [];
     const previousSnapshots = history.slice(0, -1);
     const rankDelta = calculateRankDelta(
-      product.currentRank,
+      latest.rank,
       previousSnapshots.map((s) => s.rank),
     );
 
     items.push({
       productId: product.productId,
-      rank: product.currentRank,
+      rank: latest.rank,
       rankDelta,
       name: product.name,
       brand: product.brand || null,
