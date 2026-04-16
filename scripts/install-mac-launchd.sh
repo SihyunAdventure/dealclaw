@@ -34,6 +34,7 @@ set -Eeuo pipefail
 LOG="$LOG_DIR/crawl-\$(date +%Y-%m-%d).log"
 mkdir -p "$LOG_DIR"
 exec >> "\$LOG" 2>&1
+trap 'EXIT_CODE=\$?; echo "=== \$(date '\''+%Y-%m-%d %H:%M:%S %Z'\'') crawl end (exit=\$EXIT_CODE) ==="' EXIT
 
 echo ""
 echo "=== \$(date '+%Y-%m-%d %H:%M:%S %Z') crawl start (via launchd) ==="
@@ -44,8 +45,7 @@ if [ -s "\$HOME/.nvm/nvm.sh" ]; then . "\$HOME/.nvm/nvm.sh"; fi
 cd "$PROJECT_PATH"
 
 echo "node=\$(node -v) npm=\$(npm -v) pwd=\$(pwd)"
-npm run crawl
-echo "=== \$(date '+%Y-%m-%d %H:%M:%S %Z') crawl end (exit=\$?) ==="
+bash scripts/run-scheduled-crawls.sh
 SH
   chmod +x "$ENTRY"
   echo "entry -> $ENTRY (points at $PROJECT_PATH)"
@@ -65,7 +65,19 @@ render_plist() {
   <key>WorkingDirectory</key><string>$HOME</string>
   <key>StartCalendarInterval</key>
   <array>
+    <dict><key>Hour</key><integer>6</integer><key>Minute</key><integer>0</integer></dict>
     <dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Hour</key><integer>10</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Hour</key><integer>11</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Hour</key><integer>12</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Hour</key><integer>13</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Hour</key><integer>14</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Hour</key><integer>15</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Hour</key><integer>16</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Hour</key><integer>18</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Hour</key><integer>19</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Hour</key><integer>20</integer><key>Minute</key><integer>0</integer></dict>
     <dict><key>Hour</key><integer>21</integer><key>Minute</key><integer>0</integer></dict>
   </array>
   <key>RunAtLoad</key><false/>

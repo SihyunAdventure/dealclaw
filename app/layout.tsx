@@ -51,12 +51,10 @@ export default function RootLayout({
       lang="ko"
       className={`${notoSansKr.variable} ${cormorant.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-muted/40 font-sans text-foreground">
+      <body className="min-h-full bg-background font-sans text-foreground">
         <SubscribeModalProvider>
-          <div className="min-h-screen px-0 md:px-4 lg:px-6">
-            <div className="mx-auto min-h-screen w-full max-w-[960px] bg-background shadow-sm ring-1 ring-black/4">
-              {children}
-            </div>
+          <div className="mx-auto min-h-screen w-full max-w-[640px]">
+            {children}
           </div>
         </SubscribeModalProvider>
       </body>

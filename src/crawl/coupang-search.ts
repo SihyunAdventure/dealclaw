@@ -1,6 +1,7 @@
 import type { Page } from "playwright";
 import type { CrawledProduct } from "./types";
 import { parsePriceArea } from "./parser";
+import { computeUnitPriceFromName } from "./compute-unit-price";
 
 interface RawProduct {
   name: string;
@@ -8,6 +9,8 @@ interface RawProduct {
   href: string;
   imageUrl: string;
   badges: string[];
+  reviewCountText: string;
+  ratingText: string;
 }
 
 async function extractRawProducts(page: Page): Promise<RawProduct[]> {
@@ -36,12 +39,27 @@ async function extractRawProducts(page: Page): Promise<RawProduct[]> {
         }
       });
 
+      // Review count — 쿠팡 검색 결과 카드에서 "(1,234)" 형식
+      // 셀렉터: [class*='ratingCount'], [class*='reviewCount'], fallback to text search
+      const reviewEl = item.querySelector(
+        "[class*='ratingCount'], [class*='reviewCount'], [class*='rating-total-count']",
+      );
+      const reviewCountText = reviewEl?.textContent?.trim() || "";
+
+      // Rating (stars) — e.g., "4.5" out of 5
+      const ratingEl = item.querySelector(
+        "[class*='ratingStar'], [class*='rating-star'], [class*='star-rating']",
+      );
+      const ratingText = ratingEl?.textContent?.trim() || "";
+
       results.push({
         name: nameEl?.textContent?.trim() || "",
         priceAreaText: priceArea.textContent || "",
         href: linkEl.getAttribute("href") || "",
         imageUrl: (imgEl as HTMLImageElement)?.src || "",
         badges,
+        reviewCountText,
+        ratingText,
       });
     }
 
@@ -52,9 +70,11 @@ async function extractRawProducts(page: Page): Promise<RawProduct[]> {
 export async function crawlCoupangSearch(
   page: Page,
   query: string,
+  options: { listSize?: number } = {},
 ): Promise<CrawledProduct[]> {
   const encodedQuery = encodeURIComponent(query);
-  const url = `https://www.coupang.com/np/search?q=${encodedQuery}&channel=user&sorter=priceAsc&listSize=72`;
+  const listSize = options.listSize ?? 48;
+  const url = `https://www.coupang.com/np/search?q=${encodedQuery}&channel=user&sorter=priceAsc&listSize=${listSize}`;
 
   console.log(`  → ${url}`);
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
@@ -88,14 +108,39 @@ export async function crawlCoupangSearch(
     const coupangIdMatch = raw.href.match(/products\/(\d+)/);
     if (!coupangIdMatch) continue;
 
+    // "(1,234)" 또는 "1234" 형식에서 숫자만 추출
+    const reviewCountMatch = raw.reviewCountText.match(/([\d,]+)/);
+    const reviewCount = reviewCountMatch
+      ? parseInt(reviewCountMatch[1].replace(/,/g, ""), 10) || 0
+      : 0;
+
+    // "4.5" 형식 별점 → 45 (0~50 스케일로 저장)
+    const ratingMatch = raw.ratingText.match(/([\d.]+)/);
+    const ratingAverage = ratingMatch
+      ? Math.round(parseFloat(ratingMatch[1]) * 10) || null
+      : null;
+
+    // 쿠팡이 제공하는 단가 텍스트를 우선 사용(같은 크롤에서 가격과 함께 수집되어 불일치 없음).
+    // 쿠팡이 단가를 표시하지 않은 경우에만 제품명+판매가로 계산.
+    let { unitPriceText, unitPriceValue } = parsed;
+    if (!unitPriceValue) {
+      const computed = computeUnitPriceFromName(raw.name, parsed.salePrice);
+      unitPriceText = computed.unitPriceText;
+      unitPriceValue = computed.unitPriceValue;
+    }
+
     products.push({
       name: raw.name,
       ...parsed,
+      unitPriceText,
+      unitPriceValue,
       coupangId: coupangIdMatch[1],
       link: `https://www.coupang.com${raw.href}`,
       imageUrl: raw.imageUrl,
       isRocket: raw.badges.includes("로켓"),
       badges: raw.badges,
+      reviewCount,
+      ratingAverage,
     });
   }
 

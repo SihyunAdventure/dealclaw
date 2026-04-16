@@ -13,13 +13,16 @@ export function parsePriceArea(text: string): ParsedPrice {
     num: parseInt(m[1].replace(/,/g, "")),
   }));
 
-  // Unit price — try parenthesized first, then non-parenthesized
-  // Pattern 1: "(100g당 2,598원)" or "(1구당 380원)"
-  let unitMatch = text.match(/\(([^)]*(?:\d+[가-힣]+당)\s*[\d,]+원[^)]*)\)/);
+  // Unit price — try parenthesized first, then non-parenthesized.
+  // 단위는 한글(매/구/개/포/정) 또는 영문(ml/mL/g/kg/L/cc/oz) 모두 지원.
+  // Pattern 1: "(100g당 2,598원)", "(10ml당 89원)", "(1구당 380원)"
+  let unitMatch = text.match(
+    /\(([^)]*(?:\d+\s*[a-zA-Z가-힣]+\s*당)\s*[\d,]+원[^)]*)\)/,
+  );
 
-  // Pattern 2: "100g당 2,598원" or "1구당 380원" (without parentheses)
+  // Pattern 2: 괄호 없음
   if (!unitMatch) {
-    unitMatch = text.match(/((?:\d+[가-힣]+당)\s*[\d,]+원)/);
+    unitMatch = text.match(/((?:\d+\s*[a-zA-Z가-힣]+\s*당)\s*[\d,]+원)/);
   }
 
   const unitPriceText = unitMatch ? unitMatch[1].trim() : "";

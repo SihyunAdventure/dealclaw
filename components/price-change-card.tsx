@@ -1,16 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import type {
-  HomeSignalViewModel,
-  PriceChangeSource,
-} from "@/lib/signals/price-changes";
+import type { HomeSignalViewModel } from "@/lib/signals/price-changes";
 
 function formatPrice(price: number) {
   return price.toLocaleString("ko-KR");
-}
-
-function sourceLabel(source: PriceChangeSource) {
-  return source === "oliveyoung" ? "올리브영" : "쿠팡";
 }
 
 export function PriceChangeCard({ signal }: { signal: HomeSignalViewModel }) {
@@ -24,10 +17,15 @@ export function PriceChangeCard({ signal }: { signal: HomeSignalViewModel }) {
     currentRank,
     detailHref,
     source,
-    collection,
     brand,
+    discountRate,
+    unitPriceText,
+    isRocket,
+    reviewCount,
+    ratingAverage,
   } = signal;
 
+  const hasDiscount = discountRate > 0;
   const hasDrop = dropRate >= 3;
   const hasRankJump = (rankDelta ?? 0) >= 5;
 
@@ -36,7 +34,7 @@ export function PriceChangeCard({ signal }: { signal: HomeSignalViewModel }) {
       href={detailHref}
       data-track="section_click"
       data-track-source={source}
-      className="flex gap-3 border-t border-border px-4 py-4 transition-colors hover:bg-muted/50 md:px-6"
+      className="flex gap-3 border-t border-border/60 px-5 py-4 transition-colors hover:bg-muted/30"
     >
       <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-muted">
         {imageUrl ? (
@@ -54,31 +52,21 @@ export function PriceChangeCard({ signal }: { signal: HomeSignalViewModel }) {
           </div>
         )}
       </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {hasDrop && (
-            <span className="inline-flex items-center rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-bold text-destructive">
-              새 최저가 -{dropRate}%
-            </span>
-          )}
-          {hasRankJump && currentRank != null && (
-            <span className="inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold text-accent-foreground">
-              랭킹 ↑{rankDelta} · {currentRank}위
-            </span>
-          )}
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            {sourceLabel(source)}
-          </span>
-        </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         {brand && (
           <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
             {brand}
           </p>
         )}
-        <p className="line-clamp-2 text-sm leading-snug text-foreground md:text-[15px]">
+        <p className="line-clamp-2 text-sm leading-snug text-foreground">
           {name}
         </p>
         <div className="flex items-baseline gap-2 flex-wrap">
+          {hasDiscount && (
+            <span className="text-[15px] font-bold text-destructive">
+              {discountRate}%
+            </span>
+          )}
           <span className="text-[18px] font-bold text-foreground">
             {formatPrice(currentPrice)}
             <span className="text-xs font-normal">원</span>
@@ -89,11 +77,39 @@ export function PriceChangeCard({ signal }: { signal: HomeSignalViewModel }) {
             </span>
           ) : null}
         </div>
-        {collection && (
-          <p className="line-clamp-1 text-[11px] text-muted-foreground">
-            {collection}
-          </p>
-        )}
+        <div className="flex items-center gap-2 flex-wrap text-[11px] text-muted-foreground">
+          {unitPriceText ? <span>{unitPriceText}</span> : null}
+          {ratingAverage != null ? (
+            <span className="inline-flex items-center gap-0.5">
+              <span className="text-yellow-500">★</span>
+              {(ratingAverage / 10).toFixed(1)}
+              {reviewCount > 0 ? (
+                <span className="text-muted-foreground/70">
+                  ({reviewCount.toLocaleString("ko-KR")})
+                </span>
+              ) : null}
+            </span>
+          ) : reviewCount > 0 ? (
+            <span>리뷰 {reviewCount.toLocaleString("ko-KR")}</span>
+          ) : null}
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {isRocket && (
+            <span className="inline-flex items-center rounded bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600 dark:text-blue-400">
+              🚀 로켓배송
+            </span>
+          )}
+          {hasDrop && (
+            <span className="inline-flex items-center rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] font-bold text-destructive">
+              최저가 갱신
+            </span>
+          )}
+          {hasRankJump && currentRank != null && (
+            <span className="inline-flex items-center rounded bg-accent px-1.5 py-0.5 text-[10px] font-semibold text-accent-foreground">
+              랭킹 ↑{rankDelta} · {currentRank}위
+            </span>
+          )}
+        </div>
       </div>
     </Link>
   );

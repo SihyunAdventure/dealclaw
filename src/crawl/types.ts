@@ -10,6 +10,8 @@ export interface CrawledProduct {
   imageUrl: string;
   isRocket: boolean;
   badges: string[];
+  reviewCount: number;
+  ratingAverage: number | null;
 }
 
 export interface CrawlResult {
@@ -24,6 +26,7 @@ export interface Collection {
   query: string;
   displayName: string;
   description: string;
+  scheduleHourKst?: number;
 }
 
 export type OliveYoungFlag = "sale" | "coupon" | "gift" | "delivery";

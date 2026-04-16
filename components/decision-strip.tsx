@@ -1,87 +1,150 @@
+"use client";
+
+import { useCallback, useRef, useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import type { HomeSummaryViewModel } from "@/lib/signals/price-changes";
+import type { HomeSummaryViewModel, HomeSignalViewModel } from "@/lib/signals/price-changes";
+import { cn } from "@/lib/utils";
 
 function formatPrice(price: number) {
   return price.toLocaleString("ko-KR");
-}
-
-function formatUpdatedAt(updatedAt: Date | null) {
-  if (!updatedAt) return "업데이트 시각 없음";
-  return updatedAt.toLocaleString("ko-KR", {
-    timeZone: "Asia/Seoul",
-    month: "numeric",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
 
 function sourceLabel(source: "coupang" | "oliveyoung") {
   return source === "coupang" ? "쿠팡" : "올리브영";
 }
 
-export function DecisionStrip({ summary }: { summary: HomeSummaryViewModel }) {
-  const signal = summary.strongestSignal;
-
+function HeroCard({ signal }: { signal: HomeSignalViewModel }) {
   return (
-    <section className="border-b border-border bg-card/70 px-4 py-5 md:px-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="max-w-2xl">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            strongest opportunity
-          </p>
-          <h2 className="mt-1 font-heading text-2xl font-semibold tracking-tight text-foreground md:text-[2rem]">
-            {signal ? "지금 볼 이유가 가장 강한 상품" : "오늘은 새로운 buy-now 신호가 없어요"}
-          </h2>
-          <p className="mt-2 text-xs text-muted-foreground md:text-sm">
-            마지막 업데이트 {formatUpdatedAt(summary.updatedAt)}
-          </p>
+    <Link
+      href={signal.detailHref}
+      data-track="home_hero_click"
+      data-track-source={signal.source}
+      className="group relative block w-full flex-shrink-0 snap-center overflow-hidden"
+    >
+      {signal.imageUrl ? (
+        <div className="relative aspect-square w-full bg-muted">
+          <Image
+            src={signal.imageUrl}
+            alt={signal.name}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            sizes="(max-width: 640px) 100vw, 640px"
+            unoptimized
+          />
         </div>
-        <div className="flex flex-wrap gap-2 text-[11px] font-medium md:justify-end">
-          <span className="rounded-full bg-muted px-2.5 py-1.5 text-muted-foreground">
-            쿠팡 {summary.counts.coupang ?? "—"}건
+      ) : (
+        <div className="aspect-square w-full bg-muted" />
+      )}
+
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent px-5 pt-20 pb-5">
+        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-white/80">
+          <span>{sourceLabel(signal.source)}</span>
+          {signal.dropRate > 0 && (
+            <span className="rounded-full bg-white/20 px-2 py-0.5 backdrop-blur-sm">
+              -{signal.dropRate}%
+            </span>
+          )}
+          {(signal.rankDelta ?? 0) > 0 && (
+            <span className="rounded-full bg-white/20 px-2 py-0.5 backdrop-blur-sm">
+              랭킹 ↑{signal.rankDelta}
+            </span>
+          )}
+        </div>
+        <p className="mt-2 line-clamp-2 text-base font-semibold leading-snug text-white">
+          {signal.name}
+        </p>
+        <div className="mt-2 flex items-baseline gap-2">
+          <span className="text-2xl font-bold text-white">
+            {formatPrice(signal.currentPrice)}
+            <span className="text-sm font-normal">원</span>
           </span>
-          <span className="rounded-full bg-muted px-2.5 py-1.5 text-muted-foreground">
-            올영 {summary.counts.oliveyoung ?? "—"}건
-          </span>
+          {signal.referencePrice && signal.referencePrice > signal.currentPrice ? (
+            <span className="text-sm text-white/50 line-through">
+              {formatPrice(signal.referencePrice)}원
+            </span>
+          ) : null}
         </div>
       </div>
+    </Link>
+  );
+}
 
-      {signal ? (
-        <Link
-          href={signal.detailHref}
-          data-track="home_strip_click"
-          data-track-source={signal.source}
-          className="mt-4 block rounded-2xl border border-border bg-background px-4 py-4 transition-colors hover:bg-muted/40"
-        >
-          <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            <span>{sourceLabel(signal.source)}</span>
-            {signal.dropRate > 0 && (
-              <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-destructive">
-                -{signal.dropRate}%
-              </span>
-            )}
-            {(signal.rankDelta ?? 0) > 0 && (
-              <span className="rounded-full bg-accent px-2 py-0.5 text-accent-foreground">
-                랭킹 ↑{signal.rankDelta}
-              </span>
-            )}
-          </div>
-          <p className="mt-3 max-w-2xl line-clamp-2 text-[15px] font-medium leading-snug text-foreground md:text-base">
-            {signal.name}
-          </p>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-semibold text-foreground md:text-[1.75rem]">
-              {formatPrice(signal.currentPrice)}원
-            </span>
-            {signal.referencePrice && signal.referencePrice > signal.currentPrice ? (
-              <span className="text-sm text-muted-foreground line-through">
-                {formatPrice(signal.referencePrice)}원
-              </span>
-            ) : null}
-          </div>
-        </Link>
+export function DecisionStrip({ summary }: { summary: HomeSummaryViewModel }) {
+  const { topSignals } = summary;
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const index = Math.round(el.scrollLeft / el.clientWidth);
+    setActiveIndex(index);
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", handleScroll, { passive: true });
+    return () => el.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
+
+  const scrollTo = useCallback((index: number) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ left: index * el.clientWidth, behavior: "smooth" });
+  }, []);
+
+  if (topSignals.length === 0) {
+    return (
+      <section className="px-5 py-10 text-center">
+        <p className="font-heading text-lg font-semibold text-foreground">
+          오늘은 눈에 띄는 변화가 없어요
+        </p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          가격이 떨어지거나 순위가 크게 오르면 여기에 나타납니다.
+        </p>
+      </section>
+    );
+  }
+
+  if (topSignals.length === 1) {
+    return <HeroCard signal={topSignals[0]} />;
+  }
+
+  return (
+    <div className="relative">
+      <div
+        ref={scrollRef}
+        className="flex snap-x snap-mandatory overflow-x-auto [&::-webkit-scrollbar]:hidden"
+        style={{ scrollbarWidth: "none" }}
+      >
+        {topSignals.map((signal) => (
+          <HeroCard
+            key={`${signal.source}:${signal.productId}`}
+            signal={signal}
+          />
+        ))}
+      </div>
+
+      {topSignals.length > 1 ? (
+        <div className="flex justify-center gap-1.5 py-3">
+          {topSignals.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              aria-label={`슬라이드 ${i + 1}`}
+              onClick={() => scrollTo(i)}
+              className={cn(
+                "h-1.5 rounded-full transition-all",
+                i === activeIndex
+                  ? "w-4 bg-foreground"
+                  : "w-1.5 bg-foreground/25",
+              )}
+            />
+          ))}
+        </div>
       ) : null}
-    </section>
+    </div>
   );
 }

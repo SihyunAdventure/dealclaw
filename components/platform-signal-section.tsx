@@ -30,7 +30,7 @@ export function PlatformSignalSection({
   const updatedAtText = formatUpdatedAt(result?.updatedAt ?? null);
 
   return (
-    <section className="border-b border-border lg:min-h-full lg:border-b-0">
+    <section className="border-b border-border">
       <div className="flex items-start justify-between gap-3 px-4 pt-6 pb-3 md:px-6">
         <div className="max-w-md">
           <h2 className="font-heading text-2xl font-semibold tracking-tight text-foreground">
