@@ -1,6 +1,9 @@
 import type { Collection } from "./types";
 
-export const COUPANG_LIST_SIZE = 48;
+// listSize는 한 페이지에 노출할 상품 수. 48은 쿠팡 기본값이지만 광고 dedupe 후
+// unique productId가 ~34개에 그쳤음 (2026-04-17 측정). 96으로 올리면 호출 수는
+// 동일(=봇 탐지 risk 동일)하면서 unique pool이 ~68개로 약 2배.
+export const COUPANG_LIST_SIZE = 96;
 export const COUPANG_SCHEDULE_START_HOUR_KST = 9;
 export const COUPANG_SCHEDULE_END_HOUR_KST = 20;
 export const COUPANG_BLOCK_COOLDOWN_MS = 24 * 60 * 60 * 1000;
