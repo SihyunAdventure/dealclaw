@@ -31,6 +31,18 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 세 크롤러 모두 `scripts/run-scheduled-crawls.sh` 가 KST 시각으로 dispatch.
 
+## Commit / PR conventions (commit-msg hook 강제)
+
+이 프로젝트의 commit-msg hook은 **`feat|fix|perf|refactor` 타입에 Linear 이슈 키(`SIH-XXX`) 누락을 차단**합니다. 작업 시작 전 또는 적어도 commit 직전에:
+
+1. Linear 이슈가 있는지 확인. 없으면 `dw-linear-create-issue "제목" "설명"` 으로 발급 (returns `SIH-XXX` URL)
+2. commit 메시지: `<type>(<scope>): <subject> (SIH-XXX)`
+3. PR 본문에 `Fixes SIH-XXX` 라인 포함 → 머지 시 Linear 자동 close
+4. `chore|docs|style|test|ci|build` prefix는 hook 통과 (이슈 키 불필요)
+5. 우회 환경변수 없음 — 이슈를 만드는 게 정답
+
+`gsp` / `commit-push-pr` 슬래시 커맨드는 위 검증을 자동화하니 1회성 작업엔 그쪽 사용 권장.
+
 ## Common pitfalls
 
 - 새 카테고리를 `src/data/collections.ts`에 추가해도 즉시 안 돔 — 해당 `scheduleHourKst` 슬롯이 도래해야 첫 데이터. 강제 검증은 `npm run crawl -- --collection=<slug>`
