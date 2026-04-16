@@ -135,6 +135,23 @@ export function getFreshnessBonus(updatedAt: Date) {
   return Date.now() - updatedAt.getTime() <= 6 * 3_600_000 ? 2 : 0;
 }
 
+/**
+ * 제품명에서 브랜드를 추출합니다 (휴리스틱).
+ * - 앞의 "[...]" 대괄호 prefix 제거
+ * - 그 다음 첫 단어(공백/쉼표 전까지)를 브랜드로 간주
+ *
+ * 예: "[NEW컬러/입소문템] 코스노리 이지 브로우..." → "코스노리"
+ *    "과일나라 알로에베라 모이스처..., 150ml" → "과일나라"
+ */
+function extractBrandFromName(name: string): string | null {
+  const cleaned = name.replace(/^\s*(?:\[[^\]]*\]\s*)+/g, "").trim();
+  const match = cleaned.match(/^([^\s,]+)/);
+  if (!match) return null;
+  const brand = match[1];
+  if (brand.length < 2 || brand.length > 15) return null;
+  return brand;
+}
+
 function newestDate(dates: Array<Date | null>) {
   const valid = dates.filter((date): date is Date => date instanceof Date);
   if (valid.length === 0) return null;
@@ -216,7 +233,7 @@ export async function getCoupangSignals(limit?: number): Promise<SourceSignalRes
       productId: product.id,
       name: product.name,
       imageUrl: product.imageUrl || null,
-      brand: null,
+      brand: extractBrandFromName(product.name),
       collection: product.collection,
       currentPrice: product.salePrice,
       referencePrice: priceSignal.referencePrice,
