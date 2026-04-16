@@ -4,8 +4,10 @@ import { asc, eq } from "drizzle-orm";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import * as schema from "@/lib/db/schema";
+import { DetailIntelligencePanel } from "@/components/detail-intelligence-panel";
 import { PriceChart, type PricePoint } from "@/components/price-chart";
+import * as schema from "@/lib/db/schema";
+import { buildDetailIntelligence } from "@/lib/signals/detail-intelligence";
 import { collections } from "@/src/data/collections";
 
 export const revalidate = 300;
@@ -67,10 +69,16 @@ export default async function CoupangProductPage({ params }: PageProps) {
   const prices = snapshots.map((s) => s.salePrice);
   const minPrice = prices.length > 0 ? Math.min(...prices) : null;
   const maxPrice = prices.length > 0 ? Math.max(...prices) : null;
+  const intelligence = buildDetailIntelligence({
+    source: "coupang",
+    currentPrice: product.salePrice,
+    minPrice,
+    snapshotCount: snapshots.length,
+  });
 
   return (
-    <main className="flex-1 bg-background pb-10">
-      <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-background/95 backdrop-blur px-4 py-3">
+    <main className="flex-1 bg-background pb-10" data-track="detail_view">
+      <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur md:px-6">
         <Link
           href="/"
           className="text-sm text-muted-foreground hover:text-foreground"
@@ -82,16 +90,16 @@ export default async function CoupangProductPage({ params }: PageProps) {
         </span>
       </header>
 
-      <section className="px-4 py-5 border-b border-border">
-        <div className="flex gap-4">
-          <div className="relative h-28 w-28 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
+      <section className="border-b border-border px-4 py-5 md:px-6">
+        <div className="grid gap-4 md:grid-cols-[160px_minmax(0,1fr)] md:items-start">
+          <div className="relative h-32 w-32 overflow-hidden rounded-xl bg-muted md:h-40 md:w-40">
             {product.imageUrl ? (
               <Image
                 src={product.imageUrl}
                 alt={product.name}
                 fill
-                className="object-contain p-1.5"
-                sizes="112px"
+                className="object-contain p-2"
+                sizes="160px"
                 unoptimized
               />
             ) : (
@@ -100,66 +108,76 @@ export default async function CoupangProductPage({ params }: PageProps) {
               </div>
             )}
           </div>
-          <div className="flex flex-1 flex-col gap-1 min-w-0">
-            <h1 className="text-[14px] font-medium leading-snug text-foreground">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              {collectionDisplay}
+            </p>
+            <h1 className="mt-2 text-lg font-medium leading-snug text-foreground md:text-2xl">
               {product.name}
             </h1>
-            <div className="flex items-baseline gap-1.5 flex-wrap mt-1">
+            <div className="mt-3 flex items-baseline gap-2 flex-wrap">
               {hasDiscount && (
-                <span className="text-xs font-bold text-destructive">
+                <span className="text-sm font-bold text-destructive">
                   {product.discountRate}%
                 </span>
               )}
-              <span className="text-[18px] font-bold text-foreground">
+              <span className="text-[28px] font-semibold text-foreground md:text-[34px]">
                 {formatPrice(product.salePrice)}
-                <span className="text-xs font-normal">원</span>
+                <span className="ml-1 text-sm font-normal">원</span>
               </span>
               {hasDiscount && product.originalPrice && (
-                <span className="text-[11px] text-muted-foreground line-through">
+                <span className="text-sm text-muted-foreground line-through">
                   {formatPrice(product.originalPrice)}원
                 </span>
               )}
             </div>
             {product.unitPriceText && (
-              <p className="text-[11px] text-muted-foreground mt-0.5">
+              <p className="mt-2 text-sm text-muted-foreground">
                 {product.unitPriceText}
               </p>
             )}
             {(product.isRocket || (product.badges && product.badges.length > 0)) && (
-              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+              <div className="mt-3 flex items-center gap-1.5 flex-wrap">
                 {product.isRocket && (
-                  <span className="inline-flex items-center rounded bg-sky-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                  <span className="inline-flex items-center rounded-full bg-sky-500 px-2 py-1 text-[10px] font-semibold text-white">
                     로켓배송
                   </span>
                 )}
                 {product.badges
-                  ?.filter((b) => b !== "로켓")
+                  ?.filter((badge) => badge !== "로켓")
                   .map((badge) => (
                     <span
                       key={badge}
-                      className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                      className="inline-flex items-center rounded-full bg-muted px-2 py-1 text-[10px] text-muted-foreground"
                     >
                       {badge}
                     </span>
                   ))}
               </div>
             )}
+
+            <a
+              href={product.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-track="affiliate_click"
+              className="mt-5 block w-full rounded-xl bg-primary py-3 text-center text-[15px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 md:max-w-sm"
+            >
+              쿠팡에서 보기 →
+            </a>
           </div>
         </div>
-
-        <a
-          href={product.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 block w-full rounded-lg bg-primary py-3 text-center text-[14px] font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
-        >
-          쿠팡에서 보기 →
-        </a>
       </section>
 
-      <section className="px-4 py-5 border-b border-border">
-        <div className="flex items-baseline justify-between mb-3">
-          <h2 className="font-heading text-lg font-semibold tracking-tight text-foreground">
+      <DetailIntelligencePanel
+        intelligence={intelligence}
+        primaryLabel="쿠팡 현재가 기준 판단"
+        secondaryLabel="상품 추적 알림 준비 중"
+      />
+
+      <section className="border-b border-border px-4 py-5 md:px-6">
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 className="font-heading text-2xl font-semibold tracking-tight text-foreground">
             가격 추이
           </h2>
           <p className="text-[11px] text-muted-foreground">
@@ -168,16 +186,16 @@ export default async function CoupangProductPage({ params }: PageProps) {
         </div>
         <PriceChart data={points} showRank />
         {minPrice !== null && maxPrice !== null && minPrice !== maxPrice && (
-          <div className="mt-3 grid grid-cols-2 gap-2 text-center">
-            <div className="rounded-lg bg-muted px-3 py-2">
+          <div className="mt-4 grid grid-cols-2 gap-3 text-center md:max-w-lg">
+            <div className="rounded-2xl bg-muted px-3 py-3">
               <p className="text-[10px] text-muted-foreground">기간 최저</p>
-              <p className="text-sm font-semibold text-foreground">
+              <p className="mt-1 text-lg font-semibold text-foreground">
                 {formatPrice(minPrice)}원
               </p>
             </div>
-            <div className="rounded-lg bg-muted px-3 py-2">
+            <div className="rounded-2xl bg-muted px-3 py-3">
               <p className="text-[10px] text-muted-foreground">기간 최고</p>
-              <p className="text-sm font-semibold text-foreground">
+              <p className="mt-1 text-lg font-semibold text-foreground">
                 {formatPrice(maxPrice)}원
               </p>
             </div>
@@ -185,7 +203,7 @@ export default async function CoupangProductPage({ params }: PageProps) {
         )}
       </section>
 
-      <section className="px-4 py-4 text-[11px] text-muted-foreground">
+      <section className="px-4 py-4 text-[11px] text-muted-foreground md:px-6">
         <p>컬렉션: {collectionDisplay}</p>
         <p className="mt-1">
           최근 수집:{" "}

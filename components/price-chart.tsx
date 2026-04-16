@@ -55,18 +55,23 @@ export function PriceChart({
     );
   }
 
-  // 단일 포인트는 차트가 허전해 보이니 안내
   const singlePoint = data.length === 1;
-
   const priceValues = data.map((d) => d.salePrice);
   const minPrice = Math.min(...priceValues);
   const maxPrice = Math.max(...priceValues);
   const padding = Math.max(Math.round((maxPrice - minPrice) * 0.15), 100);
+  const rankValues = data
+    .map((d) => d.rank)
+    .filter((rank): rank is number => typeof rank === "number");
+  const rankDomain =
+    rankValues.length > 0
+      ? [Math.max(1, Math.min(...rankValues) - 5), Math.max(...rankValues) + 5]
+      : [1, 100];
 
   return (
-    <div className="w-full text-foreground">
-      <div style={{ width: "100%", height }}>
-        <ResponsiveContainer>
+    <div className="w-full min-w-0 text-foreground">
+      <div style={{ width: "100%", height, minWidth: 0 }}>
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <LineChart
             data={data}
             margin={{ top: 16, right: 16, bottom: 8, left: 0 }}
@@ -88,10 +93,7 @@ export function PriceChart({
             />
             <YAxis
               yAxisId="price"
-              domain={[
-                Math.max(0, minPrice - padding),
-                maxPrice + padding,
-              ]}
+              domain={[Math.max(0, minPrice - padding), maxPrice + padding]}
               tickFormatter={fmtPrice}
               fontSize={11}
               stroke="currentColor"
@@ -104,7 +106,7 @@ export function PriceChart({
                 yAxisId="rank"
                 orientation="right"
                 reversed
-                domain={[1, 100]}
+                domain={rankDomain as [number, number]}
                 tickFormatter={(v: number) => `${v}위`}
                 fontSize={11}
                 stroke="currentColor"
