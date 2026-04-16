@@ -3,7 +3,7 @@ config({ path: ".env.local" });
 
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { and, asc, eq, gte } from "drizzle-orm";
+import { and, eq, gte } from "drizzle-orm";
 import * as schema from "../../lib/db/schema";
 import { collections } from "../data/collections";
 import { launchChrome } from "../crawl/chrome";

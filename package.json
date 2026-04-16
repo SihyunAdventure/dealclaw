@@ -10,7 +10,10 @@
     "crawl": "tsx src/scripts/run-crawl.ts",
     "crawl:oliveyoung": "tsx src/scripts/run-oliveyoung-crawl.ts",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "test": "npm run test:unit",
+    "test:unit": "node --import tsx --test ./lib/signals/price-changes.test.ts",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.1030.0",

@@ -22,7 +22,6 @@ export function ProductCard({
   originalPrice,
   discountRate,
   unitPriceText,
-  isRocket,
   badges,
 }: ProductCardProps) {
   return (

@@ -13,7 +13,7 @@ interface RawProduct {
 async function extractRawProducts(page: Page): Promise<RawProduct[]> {
   return page.evaluate(() => {
     const items = document.querySelectorAll("ul#product-list > li");
-    const results: any[] = [];
+    const results: RawProduct[] = [];
 
     for (const item of items) {
       const linkEl = item.querySelector("a[href*='/vp/products/']");

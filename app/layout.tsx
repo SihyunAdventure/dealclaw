@@ -27,13 +27,13 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "hotinbeauty — 쿠팡 뷰티 최저가",
+  title: "hotinbeauty — 올영·쿠팡 뷰티 가격 변화",
   description:
-    "매일 쿠팡 뷰티 카테고리 최저가를 단위가격 기준으로 비교하고, 관심 카테고리 최저가 갱신 시 이메일로 알려드립니다.",
+    "올리브영과 쿠팡의 뷰티 가격·랭킹 변화를 비교하고, 지금 살 이유가 생긴 상품만 먼저 보여드립니다.",
   alternates: { canonical: SITE_URL },
   openGraph: {
-    title: "hotinbeauty — 쿠팡 뷰티 최저가",
-    description: "쿠팡 뷰티 최저가를 단위가격으로 비교하고 알림 받기",
+    title: "hotinbeauty — 올영·쿠팡 뷰티 가격 변화",
+    description: "올영·쿠팡 뷰티 가격 변화를 비교하고 buy-now 신호를 확인하기",
     url: SITE_URL,
     siteName: "hotinbeauty",
     locale: "ko_KR",
@@ -51,10 +51,12 @@ export default function RootLayout({
       lang="ko"
       className={`${notoSansKr.variable} ${cormorant.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans bg-muted/40">
+      <body className="min-h-full bg-muted/40 font-sans text-foreground">
         <SubscribeModalProvider>
-          <div className="mx-auto w-full max-w-[480px] min-h-full bg-background shadow-sm">
-            {children}
+          <div className="min-h-screen px-0 md:px-4 lg:px-6">
+            <div className="mx-auto min-h-screen w-full max-w-[960px] bg-background shadow-sm ring-1 ring-black/4">
+              {children}
+            </div>
           </div>
         </SubscribeModalProvider>
       </body>
